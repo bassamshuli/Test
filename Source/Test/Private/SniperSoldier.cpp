@@ -14,6 +14,12 @@ ASniperSoldier::ASniperSoldier()
 	AttackRange = 5;
 	MovementRange = 3;
 
+	static ConstructorHelpers::FObjectFinder<UTexture2D> IconFinder(TEXT("/Game/Soldiers/Soldier1_Red"));  // 🔹 Assumiamo che l'immagine sia in questa cartella
+	if (IconFinder.Succeeded())
+	{
+		SniperIcon = IconFinder.Object;
+	}
+
 }
 // 🔹 Metodo per muovere l'unità
 void ASniperSoldier::MoveTo(FVector TargetLocation)

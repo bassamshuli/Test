@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Pawn.h"
+#include "Engine/Texture2D.h"
 #include "SniperSoldier.generated.h"
 
 UCLASS()
@@ -31,6 +32,10 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement")
 	int32 MovementRange;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Sniper Settings")
+	UTexture2D* SniperIcon;  // 🔹 Texture dell'icona del soldato Sniper
+    
+
 public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
@@ -45,5 +50,9 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	bool IsAlive() const { return Health > 0; }
+
+	// 🔹 Metodo per ottenere l'icona
+	UFUNCTION(BlueprintCallable)
+	UTexture2D* GetSniperIcon() const { return SniperIcon; }
 
 };
