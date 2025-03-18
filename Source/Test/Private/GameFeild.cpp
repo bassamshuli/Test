@@ -14,7 +14,7 @@ AGameFeild::AGameFeild()
 
 	Rows = 25;      // Default: 25 righe
 	Columns = 25;   // Default: 25 colonne
-	CellSize = 100.0f;  // Ogni cella è grande 100 unità
+	CellSize = 300.0f;  // Ogni cella è grande 100 unità
 
 	// 🔹 Trova il Blueprint di Tile e caricalo (Assicurati che il percorso sia corretto!)
 	static ConstructorHelpers::FClassFinder<AActor> TileBP(TEXT("/Game/Blueprints/BP_Tile"));
@@ -41,7 +41,7 @@ void AGameFeild::GenerateGrid()
 
     Tiles.Empty();  // 🔹 Svuota l'array prima di creare nuovi Tile
 
-    float Spacing = 10.0f; // 🔹 Aggiunge spazio tra i Tile
+    float Spacing = 5.0f; // 🔹 Aggiunge spazio tra i Tile
     float AdjustedCellSize = CellSize + Spacing; // 🔹 CellSize con margine incluso
 
     float StartX = -((Columns - 1) * AdjustedCellSize) / 2.0f;
