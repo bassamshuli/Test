@@ -14,7 +14,7 @@ AGameFeild::AGameFeild()
 
 	Rows = 25;      // Default: 25 righe
 	Columns = 25;   // Default: 25 colonne
-	CellSize = 300.0f;  // Ogni cella è grande 100 unità
+	CellSize = 37.0f;  // Ogni cella è grande 100 unità
 
 	// 🔹 Trova il Blueprint di Tile e caricalo (Assicurati che il percorso sia corretto!)
 	static ConstructorHelpers::FClassFinder<AActor> TileBP(TEXT("/Game/Blueprints/BP_Tile"));
