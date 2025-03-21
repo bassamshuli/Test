@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "Tile.h"
+#include "Obstacles.h"
 #include "GameFeild.generated.h"
 
 UCLASS()
@@ -36,9 +37,18 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Grid")
 	TSubclassOf<AActor> TileBlueprint;
 
+	UPROPERTY(EditAnywhere, Category = "Obstacles")
+	TSubclassOf<AObstacles> MountainBlueprint;
+
+	UPROPERTY(EditAnywhere, Category = "Obstacles")
+	TSubclassOf<AObstacles> TreeBlueprint;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Spawn")
+	TSubclassOf<AObstacles> ObstacleToSpawn;
 public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 	void GenerateGrid();
+	void GenerateObstacles();
 
 };

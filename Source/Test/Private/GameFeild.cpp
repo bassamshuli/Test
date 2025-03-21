@@ -22,6 +22,22 @@ AGameFeild::AGameFeild()
 	{
 		TileBlueprint = TileBP.Class;
 	}
+    static ConstructorHelpers::FClassFinder<AObstacles> MountainBP(TEXT("/Game/Blueprints/BP_Mountain"));
+    if (MountainBP.Succeeded())
+    {
+        MountainBlueprint = MountainBP.Class;
+    }
+
+    static ConstructorHelpers::FClassFinder<AObstacles> TreeBP(TEXT("/Game/Blueprints/BP_Tree"));
+    if (TreeBP.Succeeded())
+    {
+        TreeBlueprint = TreeBP.Class;
+    }
+    static ConstructorHelpers::FClassFinder<AObstacles> ObstacleBP(TEXT("/Game/Blueprints/BP_Tree"));
+    if (ObstacleBP.Succeeded())
+    {
+        ObstacleToSpawn = ObstacleBP.Class;
+    }
 
 
 }
@@ -79,11 +95,56 @@ void AGameFeild::GenerateGrid()
     UE_LOG(LogTemp, Warning, TEXT("✅ GenerateGrid: Griglia generata con %d Tile!"), TileCount);
 }
 
+void AGameFeild::GenerateObstacles()
+{
+    UWorld* World = GetWorld();
+    if (!World || (!MountainBlueprint && !TreeBlueprint)) return;
+
+    int32 NumObstacles = FMath::RoundToInt((Rows * Columns) * 0.1f);
+    TSet<int32> UsedIndices;
+
+    for (int32 i = 0; i < NumObstacles; i++)
+    {
+        int32 RandomIndex;
+        do {
+            RandomIndex = FMath::RandRange(0, Tiles.Num() - 1);
+        } while (UsedIndices.Contains(RandomIndex));
+
+        UsedIndices.Add(RandomIndex);
+
+        FVector SpawnLocation = Tiles[RandomIndex]->GetActorLocation() + FVector(0, 0, 10);
+
+        // Usa direttamente la variabile membro ObstacleToSpawn
+        ObstacleToSpawn = FMath::RandBool() ? MountainBlueprint : TreeBlueprint;
+
+        if (!ObstacleToSpawn)
+        {
+            UE_LOG(LogTemp, Error, TEXT("❌ ERRORE: ObstacleToSpawn è NULL!"));
+            continue;
+        }
+
+        AObstacles* NewObstacle = World->SpawnActor<AObstacles>(ObstacleToSpawn, SpawnLocation, FRotator::ZeroRotator);
+
+        if (NewObstacle)
+        {
+            UE_LOG(LogTemp, Warning, TEXT("✅ Ostacolo posizionato su Tile %d."), RandomIndex);
+        }
+        else
+        {
+            UE_LOG(LogTemp, Error, TEXT("❌ ERRORE: Ostacolo NON spawnato su Tile %d."), RandomIndex);
+        }
+    }
+}
+
 // Called when the game starts or when spawned
 void AGameFeild::BeginPlay()
 {
 	Super::BeginPlay();
     GenerateGrid();  // 🔹 Genera la griglia automaticamente
+    GenerateObstacles();
+
+
+
 	
 }
 
