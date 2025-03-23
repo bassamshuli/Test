@@ -6,6 +6,14 @@
 #include "GameFramework/Pawn.h"
 #include "Soldier.generated.h"
 
+UENUM(BlueprintType)
+enum class EAttackType : uint8
+{
+	Melee UMETA(DisplayName = "Melee"),
+	Ranged UMETA(DisplayName = "Ranged")
+};
+
+
 UCLASS()
 class TEST_API ASoldier : public APawn
 {
@@ -23,7 +31,24 @@ public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
-	// Called to bind functionality to input
-	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stats")
+    int32 MaxMovement;
 
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stats")
+    EAttackType AttackType;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stats")
+    int32 AttackRange;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stats")
+    int32 MinDamage;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stats")
+    int32 MaxDamage;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stats")
+    int32 Health;
+
+    UFUNCTION(BlueprintCallable, Category = "Combat")
+    int32 GetRandomDamage() const;
 };

@@ -9,44 +9,14 @@ ASniperSoldier::ASniperSoldier()
  	// Set this pawn to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
-	Health = 80;
-	AttackDamage = 15;
-	AttackRange = 5;
-	MovementRange = 3;
+	MaxMovement = 3;
+	AttackType = EAttackType::Ranged;
+	AttackRange = 10;
+	MinDamage = 4;
+	MaxDamage = 8;
+	Health = 20;
 
-	static ConstructorHelpers::FObjectFinder<UTexture2D> IconFinder(TEXT("/Game/Soldiers/Soldier1_Red"));  // 🔹 Assumiamo che l'immagine sia in questa cartella
-	if (IconFinder.Succeeded())
-	{
-		SniperIcon = IconFinder.Object;
-	}
 
-}
-// 🔹 Metodo per muovere l'unità
-void ASniperSoldier::MoveTo(FVector TargetLocation)
-{
-	SetActorLocation(TargetLocation);
-}
-// 🔹 Metodo per attaccare un altro soldato
-void ASniperSoldier::Attack(ASniperSoldier* Target)
-{
-	if (!Target || !IsAlive()) return;
-
-	float Distance = FVector::Dist(GetActorLocation(), Target->GetActorLocation());
-
-	if (Distance <= AttackRange * 100.0f)
-	{
-		Target->TakeDamage(AttackDamage);
-	}
-}
-// 🔹 Metodo per ricevere danni
-void ASniperSoldier::TakeDamage(int32 DamageAmount)
-{
-	Health -= DamageAmount;
-	if (Health <= 0)
-	{
-		Health = 0;
-		Destroy();
-	}
 }
 
 // Called when the game starts or when spawned
@@ -63,10 +33,5 @@ void ASniperSoldier::Tick(float DeltaTime)
 
 }
 
-// Called to bind functionality to input
-void ASniperSoldier::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
-{
-	Super::SetupPlayerInputComponent(PlayerInputComponent);
 
-}
 

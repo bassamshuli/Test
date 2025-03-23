@@ -2,6 +2,7 @@
 
 
 #include "Soldier.h"
+#include "Math/UnrealMathUtility.h"
 
 // Sets default values
 ASoldier::ASoldier()
@@ -25,10 +26,8 @@ void ASoldier::Tick(float DeltaTime)
 
 }
 
-// Called to bind functionality to input
-void ASoldier::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
+int32 ASoldier::GetRandomDamage() const
 {
-	Super::SetupPlayerInputComponent(PlayerInputComponent);
-
+	return FMath::RandRange(MinDamage, MaxDamage);
 }
 

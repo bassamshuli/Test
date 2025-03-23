@@ -95,6 +95,7 @@ void AGameFeild::GenerateGrid()
     UE_LOG(LogTemp, Warning, TEXT("✅ GenerateGrid: Griglia generata con %d Tile!"), TileCount);
 }
 
+
 void AGameFeild::GenerateObstacles()
 {
     UWorld* World = GetWorld();
@@ -136,17 +137,20 @@ void AGameFeild::GenerateObstacles()
     }
 }
 
+
 // Called when the game starts or when spawned
 void AGameFeild::BeginPlay()
 {
 	Super::BeginPlay();
     GenerateGrid();  // 🔹 Genera la griglia automaticamente
     GenerateObstacles();
+    
 
 
 
 	
 }
+
 
 // Called every frame
 void AGameFeild::Tick(float DeltaTime)

@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "Tile.h"
+#include "Soldier.h"
 #include "Obstacles.h"
 #include "GameFeild.generated.h"
 
@@ -45,10 +46,25 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Spawn")
 	TSubclassOf<AObstacles> ObstacleToSpawn;
+
+	//test
+	UPROPERTY(EditAnywhere, Category = "Soldier")
+	TSubclassOf<ASoldier> BP_Brawler_Green;
+
+	UPROPERTY(EditAnywhere, Category = "Soldier")
+	TSubclassOf<ASoldier> BP_Brawler_Red;
+
+	UPROPERTY(EditAnywhere, Category = "Soldier")
+	TSubclassOf<ASoldier> BP_Sniper_Green;
+
+	UPROPERTY(EditAnywhere, Category = "Soldier")
+	TSubclassOf<ASoldier> BP_Sniper_Red;
+	//test
 public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 	void GenerateGrid();
 	void GenerateObstacles();
+	
 
 };
