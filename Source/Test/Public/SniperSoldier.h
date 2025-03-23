@@ -5,10 +5,11 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Pawn.h"
 #include "Engine/Texture2D.h"
+#include "Soldier.h"
 #include "SniperSoldier.generated.h"
 
 UCLASS()
-class TEST_API ASniperSoldier : public APawn
+class TEST_API ASniperSoldier : public ASoldier
 {
 	GENERATED_BODY()
 

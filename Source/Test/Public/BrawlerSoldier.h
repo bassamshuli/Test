@@ -4,10 +4,11 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Pawn.h"
+#include "Soldier.h"
 #include "BrawlerSoldier.generated.h"
 
 UCLASS()
-class TEST_API ABrawlerSoldier : public APawn
+class TEST_API ABrawlerSoldier : public ASoldier
 {
 	GENERATED_BODY()
 
