@@ -12,6 +12,8 @@ AGameFeild::AGameFeild()
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = false;
 
+    GenerateGrid();  // 🔹 Genera la griglia automaticamente
+
 	Rows = 25;      // Default: 25 righe
 	Columns = 25;   // Default: 25 colonne
 	CellSize = 37.0f;  // Ogni cella è grande 100 unità
@@ -94,6 +96,12 @@ void AGameFeild::GenerateGrid()
 
     UE_LOG(LogTemp, Warning, TEXT("✅ GenerateGrid: Griglia generata con %d Tile!"), TileCount);
 }
+void AGameFeild::OnConstruction(const FTransform& Transform)
+{
+    Super::OnConstruction(Transform);
+
+    GenerateGrid(); // Questa chiamata mostra la griglia appena carichi la mappa
+}
 
 
 void AGameFeild::GenerateObstacles()
@@ -142,7 +150,7 @@ void AGameFeild::GenerateObstacles()
 void AGameFeild::BeginPlay()
 {
 	Super::BeginPlay();
-    GenerateGrid();  // 🔹 Genera la griglia automaticamente
+
     GenerateObstacles();
     
 
