@@ -4,6 +4,7 @@
 #include "GameFeild.h"
 #include "Engine/World.h"
 #include "Tile.h"
+#include "Blueprint/UserWidget.h"
 #include "UObject/ConstructorHelpers.h"
 
 // Sets default values
@@ -152,6 +153,20 @@ void AGameFeild::BeginPlay()
 	Super::BeginPlay();
 
     GenerateObstacles();
+
+    if (GameWidgetClass)
+    {
+        GameWidgetInstance = CreateWidget<UUserWidget>(GetWorld(), GameWidgetClass);
+        if (GameWidgetInstance)
+        {
+            GameWidgetInstance->AddToViewport();
+            UE_LOG(LogTemp, Warning, TEXT("✅ Widget WBP_Game aggiunto al viewport!"));
+        }
+    }
+    else
+    {
+        UE_LOG(LogTemp, Error, TEXT("❌ GameWidgetClass NON assegnato!"));
+    }
     
 
 
