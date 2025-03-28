@@ -14,6 +14,8 @@ ABaseGameMode::ABaseGameMode()
 }
 
 
+
+
 void ABaseGameMode::BeginPlay()
 {
     Super::BeginPlay();
@@ -37,4 +39,17 @@ void ABaseGameMode::BeginPlay()
         }
     }
 }
+
+void ABaseGameMode::StartGame()
+{
+    // Lancia la moneta
+    bool bPlayerStarts = FMath::RandBool();
+    CurrentTeam = bPlayerStarts ? ETeam::Player : ETeam::AI;
+
+    FString TurnMessage = bPlayerStarts ? TEXT("🎲 Turno del Player - Posiziona un'unità!") : TEXT("🎲 Turno dell'AI - Posiziona un'unità!");
+    GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Green, TurnMessage);
+
+    // Qui potrai poi gestire il posizionamento a turni
+}
+
 
