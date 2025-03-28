@@ -19,6 +19,11 @@ public:
 	// Sets default values for this actor's properties
 	AGameFeild();
 
+	bool bGameStarted = false;
+	int32 UnitsToPlace = 4;
+
+	void HandleTileClicked(ATile* ClickedTile);
+
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
@@ -60,6 +65,7 @@ public:
 	virtual void Tick(float DeltaTime) override;
 	void GenerateGrid();
 	void GenerateObstacles();
+	void StartGame();
 	
 
 };

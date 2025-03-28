@@ -34,6 +34,9 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Grid")
 	AActor* OccupyingUnit;  // 🔹 Unità presente nella cella (se c'è)
 
+	UFUNCTION()
+	void OnTileClicked(AActor* TouchedActor, FKey ButtonPressed);
+
 public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;

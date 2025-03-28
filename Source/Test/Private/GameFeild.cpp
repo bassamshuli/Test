@@ -147,9 +147,27 @@ void AGameFeild::GenerateObstacles()
 }
 
 
+void AGameFeild::HandleTileClicked(ATile* ClickedTile)
+{
+}
+void AGameFeild::StartGame()
+{
+    bGameStarted = true;
+    UE_LOG(LogTemp, Warning, TEXT("🎮 Il gioco è iniziato!"));
+    // Qui puoi lanciare la moneta e mostrare il messaggio turno
+}
+
 // Called when the game starts or when spawned
 void AGameFeild::BeginPlay()
 {
+    APlayerController* PC = GetWorld()->GetFirstPlayerController();
+    if (PC)
+    {
+        PC->bEnableClickEvents = true;
+        PC->bEnableMouseOverEvents = true;
+        PC->bShowMouseCursor = true;
+    }
+
 	Super::BeginPlay();
 
     GenerateObstacles();
