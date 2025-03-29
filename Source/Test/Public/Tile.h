@@ -9,36 +9,32 @@
 UCLASS()
 class TEST_API ATile : public AActor
 {
-	GENERATED_BODY()
-	
-public:	
-	// Sets default values for this actor's properties
-	ATile();
+    GENERATED_BODY()
 
-	// 🔹 Imposta la posizione della cella nella griglia
-	void SetGridPosition(FVector2D NewPosition);
+public:
+    ATile();
 
-	// 🔹 Controlla se la cella è occupata
-	bool IsOccupied() const;
+    void SetGridPosition(FVector2D NewPosition);
 
-	// 🔹 Imposta un'unità nella cella
-	void SetOccupyingUnit(AActor* NewUnit);
+    UFUNCTION(BlueprintCallable)
+    bool IsTileFree() const;
+
+    UFUNCTION(BlueprintCallable)
+    void SetTileOccupied(bool bOccupied);
 
 protected:
-	// Called when the game starts or when spawned
-	virtual void BeginPlay() override;
+    virtual void BeginPlay() override;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Grid")
-	FVector2D GridPosition;  // 🔹 Posizione della cella nella griglia
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Grid")
+    FVector2D GridPosition;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Grid")
-	AActor* OccupyingUnit;  // 🔹 Unità presente nella cella (se c'è)
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Grid")
+    bool bIsOccupied;
 
-	UFUNCTION()
-	void OnTileClicked(AActor* TouchedActor, FKey ButtonPressed);
+    UFUNCTION()
+    void OnTileClicked(AActor* TouchedActor, FKey ButtonPressed);
 
-public:	
-	// Called every frame
-	virtual void Tick(float DeltaTime) override;
-
+public:
+    virtual void Tick(float DeltaTime) override;
+    virtual void NotifyActorOnClicked(FKey ButtonPressed) override;
 };

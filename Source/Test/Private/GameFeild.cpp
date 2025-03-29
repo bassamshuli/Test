@@ -6,160 +6,38 @@
 #include "Tile.h"
 #include "Blueprint/UserWidget.h"
 #include "UObject/ConstructorHelpers.h"
+#include "Kismet/GameplayStatics.h"
 
-// Sets default values
 AGameFeild::AGameFeild()
 {
- 	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
-	PrimaryActorTick.bCanEverTick = false;
+    PrimaryActorTick.bCanEverTick = false;
 
-    GenerateGrid();  // 🔹 Genera la griglia automaticamente
+    Rows = 25;
+    Columns = 25;
+    CellSize = 37.0f;
 
-	Rows = 25;      // Default: 25 righe
-	Columns = 25;   // Default: 25 colonne
-	CellSize = 37.0f;  // Ogni cella è grande 100 unità
+    static ConstructorHelpers::FClassFinder<AActor> TileBP(TEXT("/Game/Blueprints/BP_Tile"));
+    if (TileBP.Succeeded()) TileBlueprint = TileBP.Class;
 
-	// 🔹 Trova il Blueprint di Tile e caricalo (Assicurati che il percorso sia corretto!)
-	static ConstructorHelpers::FClassFinder<AActor> TileBP(TEXT("/Game/Blueprints/BP_Tile"));
-	if (TileBP.Succeeded())
-	{
-		TileBlueprint = TileBP.Class;
-	}
     static ConstructorHelpers::FClassFinder<AObstacles> MountainBP(TEXT("/Game/Blueprints/BP_Mountain"));
-    if (MountainBP.Succeeded())
-    {
-        MountainBlueprint = MountainBP.Class;
-    }
+    if (MountainBP.Succeeded()) MountainBlueprint = MountainBP.Class;
 
     static ConstructorHelpers::FClassFinder<AObstacles> TreeBP(TEXT("/Game/Blueprints/BP_Tree"));
-    if (TreeBP.Succeeded())
-    {
-        TreeBlueprint = TreeBP.Class;
-    }
-    static ConstructorHelpers::FClassFinder<AObstacles> ObstacleBP(TEXT("/Game/Blueprints/BP_Tree"));
-    if (ObstacleBP.Succeeded())
-    {
-        ObstacleToSpawn = ObstacleBP.Class;
-    }
+    if (TreeBP.Succeeded()) TreeBlueprint = TreeBP.Class;
 
-
+    ObstacleToSpawn = TreeBlueprint;
 }
 
-void AGameFeild::GenerateGrid()
-{
-    UE_LOG(LogTemp, Warning, TEXT("✅ GenerateGrid() è stata chiamata!"));
-
-    UWorld* World = GetWorld();
-    if (!World || !TileBlueprint)
-    {
-        UE_LOG(LogTemp, Error, TEXT("❌ ERRORE: World o TileBlueprint è NULL!"));
-        return;
-    }
-
-    UE_LOG(LogTemp, Warning, TEXT("GenerateGrid: Inizio generazione griglia..."));
-
-    Tiles.Empty();  // 🔹 Svuota l'array prima di creare nuovi Tile
-
-    float Spacing = 5.0f; // 🔹 Aggiunge spazio tra i Tile
-    float AdjustedCellSize = CellSize + Spacing; // 🔹 CellSize con margine incluso
-
-    float StartX = -((Columns - 1) * AdjustedCellSize) / 2.0f;
-    float StartY = -((Rows - 1) * AdjustedCellSize) / 2.0f;
-
-    int32 TileCount = 0;  // 🔹 Contatore dei Tile generati
-
-    for (int32 Row = 0; Row < Rows; Row++)
-    {
-        for (int32 Col = 0; Col < Columns; Col++)
-        {
-            // 🔹 Posizionamento con spaziatura tra i Tile
-            FVector CellLocation = FVector(StartX + (Col * AdjustedCellSize), StartY + (Row * AdjustedCellSize), 0);
-            FRotator Rotation = FRotator::ZeroRotator;
-            FActorSpawnParameters SpawnParams;
-
-            AActor* NewTile = World->SpawnActor<AActor>(TileBlueprint, CellLocation, Rotation, SpawnParams);
-
-            if (NewTile)
-            {
-                UE_LOG(LogTemp, Warning, TEXT("✅ Tile %d creato in posizione (%d, %d) -> Posizione reale: X=%f, Y=%f"),
-                    TileCount, Row, Col, CellLocation.X, CellLocation.Y);
-
-                ATile* TileInstance = Cast<ATile>(NewTile);
-                if (TileInstance)
-                {
-                    Tiles.Add(TileInstance);
-                }
-
-                TileCount++;  // 🔹 Incrementa il contatore
-            }
-        }
-    }
-
-    UE_LOG(LogTemp, Warning, TEXT("✅ GenerateGrid: Griglia generata con %d Tile!"), TileCount);
-}
 void AGameFeild::OnConstruction(const FTransform& Transform)
 {
     Super::OnConstruction(Transform);
-
-    GenerateGrid(); // Questa chiamata mostra la griglia appena carichi la mappa
+    GenerateGrid();
 }
 
-
-void AGameFeild::GenerateObstacles()
-{
-    UWorld* World = GetWorld();
-    if (!World || (!MountainBlueprint && !TreeBlueprint)) return;
-
-    int32 NumObstacles = FMath::RoundToInt((Rows * Columns) * 0.1f);
-    TSet<int32> UsedIndices;
-
-    for (int32 i = 0; i < NumObstacles; i++)
-    {
-        int32 RandomIndex;
-        do {
-            RandomIndex = FMath::RandRange(0, Tiles.Num() - 1);
-        } while (UsedIndices.Contains(RandomIndex));
-
-        UsedIndices.Add(RandomIndex);
-
-        FVector SpawnLocation = Tiles[RandomIndex]->GetActorLocation() + FVector(0, 0, 10);
-
-        // Usa direttamente la variabile membro ObstacleToSpawn
-        ObstacleToSpawn = FMath::RandBool() ? MountainBlueprint : TreeBlueprint;
-
-        if (!ObstacleToSpawn)
-        {
-            UE_LOG(LogTemp, Error, TEXT("❌ ERRORE: ObstacleToSpawn è NULL!"));
-            continue;
-        }
-
-        AObstacles* NewObstacle = World->SpawnActor<AObstacles>(ObstacleToSpawn, SpawnLocation, FRotator::ZeroRotator);
-
-        if (NewObstacle)
-        {
-            UE_LOG(LogTemp, Warning, TEXT("✅ Ostacolo posizionato su Tile %d."), RandomIndex);
-        }
-        else
-        {
-            UE_LOG(LogTemp, Error, TEXT("❌ ERRORE: Ostacolo NON spawnato su Tile %d."), RandomIndex);
-        }
-    }
-}
-
-
-void AGameFeild::HandleTileClicked(ATile* ClickedTile)
-{
-}
-void AGameFeild::StartGame()
-{
-    bGameStarted = true;
-    UE_LOG(LogTemp, Warning, TEXT("🎮 Il gioco è iniziato!"));
-    // Qui puoi lanciare la moneta e mostrare il messaggio turno
-}
-
-// Called when the game starts or when spawned
 void AGameFeild::BeginPlay()
 {
+    Super::BeginPlay();
+
     APlayerController* PC = GetWorld()->GetFirstPlayerController();
     if (PC)
     {
@@ -167,8 +45,6 @@ void AGameFeild::BeginPlay()
         PC->bEnableMouseOverEvents = true;
         PC->bShowMouseCursor = true;
     }
-
-	Super::BeginPlay();
 
     GenerateObstacles();
 
@@ -178,25 +54,118 @@ void AGameFeild::BeginPlay()
         if (GameWidgetInstance)
         {
             GameWidgetInstance->AddToViewport();
-            UE_LOG(LogTemp, Warning, TEXT("✅ Widget WBP_Game aggiunto al viewport!"));
         }
     }
-    else
-    {
-        UE_LOG(LogTemp, Error, TEXT("❌ GameWidgetClass NON assegnato!"));
-    }
-    
 
-
-
-	
+    SpawnQueue = { BP_Brawler_Green, BP_Brawler_Red, BP_Sniper_Green, BP_Sniper_Red };
+    CurrentUnitIndex = 0;
+    bIsPlayerTurn = true;
+    bGameStarted = true;
 }
 
+void AGameFeild::GenerateGrid()
+{
+    if (!TileBlueprint) return;
 
-// Called every frame
+    UWorld* World = GetWorld();
+    if (!World) return;
+
+    Tiles.Empty();
+    float Spacing = 5.0f;
+    float AdjustedCellSize = CellSize + Spacing;
+    float StartX = -((Columns - 1) * AdjustedCellSize) / 2.0f;
+    float StartY = -((Rows - 1) * AdjustedCellSize) / 2.0f;
+
+    for (int32 Row = 0; Row < Rows; ++Row)
+    {
+        for (int32 Col = 0; Col < Columns; ++Col)
+        {
+            FVector Location(StartX + Col * AdjustedCellSize, StartY + Row * AdjustedCellSize, 0);
+            AActor* SpawnedTile = World->SpawnActor<AActor>(TileBlueprint, Location, FRotator::ZeroRotator);
+            if (ATile* Tile = Cast<ATile>(SpawnedTile))
+            {
+                Tiles.Add(Tile);
+            }
+        }
+    }
+}
+
+void AGameFeild::GenerateObstacles()
+{
+    if (!MountainBlueprint || !TreeBlueprint || Tiles.Num() == 0) return;
+    UWorld* World = GetWorld();
+    int32 NumObstacles = FMath::RoundToInt(Rows * Columns * 0.1f);
+    TSet<int32> UsedIndices;
+
+    while (UsedIndices.Num() < NumObstacles)
+    {
+        int32 Index = FMath::RandRange(0, Tiles.Num() - 1);
+        if (!UsedIndices.Contains(Index))
+        {
+            UsedIndices.Add(Index);
+            FVector Location = Tiles[Index]->GetActorLocation() + FVector(0, 0, 10);
+            TSubclassOf<AObstacles> Obstacle = FMath::RandBool() ? MountainBlueprint : TreeBlueprint;
+            World->SpawnActor<AObstacles>(Obstacle, Location, FRotator::ZeroRotator);
+        }
+    }
+}
+
+void AGameFeild::HandleTileClicked(ATile* ClickedTile)
+{
+    if (!ClickedTile || !ClickedTile->IsTileFree()) return;
+    if (!bIsPlayerTurn || CurrentUnitIndex >= SpawnQueue.Num()) return;
+
+    TSubclassOf<ASoldier> UnitToSpawn = SpawnQueue[CurrentUnitIndex];
+    FVector Location = ClickedTile->GetActorLocation() + FVector(0, 0, 50);
+
+    ASoldier* NewUnit = GetWorld()->SpawnActor<ASoldier>(UnitToSpawn, Location, FRotator::ZeroRotator);
+    if (NewUnit)
+    {
+        ClickedTile->SetTileOccupied(true);
+        CurrentUnitIndex++;
+        bIsPlayerTurn = false;
+        GetWorldTimerManager().SetTimerForNextTick(this, &AGameFeild::PlaceAIUnit);
+    }
+}
+
+void AGameFeild::PlaceAIUnit()
+{
+    if (CurrentUnitIndex >= SpawnQueue.Num()) return;
+
+    // 🔹 Filtra tutte le tile libere
+    TArray<ATile*> FreeTiles;
+    for (ATile* Tile : Tiles)
+    {
+        if (Tile && Tile->IsTileFree())
+        {
+            FreeTiles.Add(Tile);
+        }
+    }
+
+    // 🔹 Se ci sono tile libere, scegli una a caso
+    if (FreeTiles.Num() > 0)
+    {
+        int32 RandomIndex = FMath::RandRange(0, FreeTiles.Num() - 1);
+        ATile* SelectedTile = FreeTiles[RandomIndex];
+
+        FVector SpawnLocation = SelectedTile->GetActorLocation() + FVector(0, 0, 50);
+        ASoldier* AIUnit = GetWorld()->SpawnActor<ASoldier>(SpawnQueue[CurrentUnitIndex], SpawnLocation, FRotator::ZeroRotator);
+
+        if (AIUnit)
+        {
+            SelectedTile->SetTileOccupied(true);
+            CurrentUnitIndex++;
+            bIsPlayerTurn = true;
+        }
+    }
+}
+
+void AGameFeild::StartGame()
+{
+    bGameStarted = true;
+}
+
 void AGameFeild::Tick(float DeltaTime)
 {
-	Super::Tick(DeltaTime);
-
+    Super::Tick(DeltaTime);
 }
-

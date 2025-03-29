@@ -14,20 +14,27 @@ UCLASS()
 class TEST_API AGameFeild : public AActor
 {
 	GENERATED_BODY()
-	
-public:	
-	// Sets default values for this actor's properties
+
+public:
 	AGameFeild();
 
-	bool bGameStarted = false;
-	int32 UnitsToPlace = 4;
+	virtual void Tick(float DeltaTime) override;
+	virtual void OnConstruction(const FTransform& Transform) override;
 
 	void HandleTileClicked(ATile* ClickedTile);
+	void StartGame();
+	void GenerateGrid();
+	void GenerateObstacles();
 
 protected:
-	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
-	virtual void OnConstruction(const FTransform& Transform) override;
+
+	UFUNCTION()
+	void PlaceAIUnit();
+
+	bool bGameStarted = false;
+	bool bIsPlayerTurn = true;
+	int32 CurrentUnitIndex = 0;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Grid")
 	int32 Rows;
@@ -39,9 +46,8 @@ protected:
 	float CellSize;
 
 	UPROPERTY(VisibleAnywhere, Category = "Grid")
-	TArray<ATile*> Tiles;  // 🔹 Usa ATile* invece di AActor*
+	TArray<ATile*> Tiles;
 
-	// 🔹 Dichiarazione del Blueprint della Tile
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Grid")
 	TSubclassOf<AActor> TileBlueprint;
 
@@ -59,13 +65,17 @@ protected:
 
 	UUserWidget* GameWidgetInstance;
 
+	UPROPERTY(EditAnywhere, Category = "Setup")
+	TSubclassOf<ASoldier> BP_Brawler_Green;
 
-public:	
-	// Called every frame
-	virtual void Tick(float DeltaTime) override;
-	void GenerateGrid();
-	void GenerateObstacles();
-	void StartGame();
-	
+	UPROPERTY(EditAnywhere, Category = "Setup")
+	TSubclassOf<ASoldier> BP_Brawler_Red;
 
+	UPROPERTY(EditAnywhere, Category = "Setup")
+	TSubclassOf<ASoldier> BP_Sniper_Green;
+
+	UPROPERTY(EditAnywhere, Category = "Setup")
+	TSubclassOf<ASoldier> BP_Sniper_Red;
+
+	TArray<TSubclassOf<ASoldier>> SpawnQueue;
 };
