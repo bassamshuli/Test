@@ -14,27 +14,13 @@ class TEST_API ATile : public AActor
 public:
     ATile();
 
-    void SetGridPosition(FVector2D NewPosition);
-
-    UFUNCTION(BlueprintCallable)
-    bool IsTileFree() const;
-
-    UFUNCTION(BlueprintCallable)
-    void SetTileOccupied(bool bOccupied);
+    UFUNCTION(BlueprintCallable) bool IsTileFree() const;
+    UFUNCTION(BlueprintCallable) void SetTileOccupied(bool bOccupied);
+    UFUNCTION() void OnTileClicked(AActor* TouchedActor, FKey ButtonPressed);
 
 protected:
     virtual void BeginPlay() override;
 
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Grid")
-    FVector2D GridPosition;
-
-    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Grid")
-    bool bIsOccupied;
-
-    UFUNCTION()
-    void OnTileClicked(AActor* TouchedActor, FKey ButtonPressed);
-
-public:
-    virtual void Tick(float DeltaTime) override;
-    virtual void NotifyActorOnClicked(FKey ButtonPressed) override;
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Grid") FVector2D GridPosition;
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Grid") bool bIsOccupied;
 };

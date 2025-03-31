@@ -9,46 +9,27 @@
 UENUM(BlueprintType)
 enum class EAttackType : uint8
 {
-	Melee UMETA(DisplayName = "Melee"),
-	Ranged UMETA(DisplayName = "Ranged")
+    Melee UMETA(DisplayName = "Melee"),
+    Ranged UMETA(DisplayName = "Ranged")
 };
-
 
 UCLASS()
 class TEST_API ASoldier : public APawn
 {
-	GENERATED_BODY()
+    GENERATED_BODY()
 
 public:
-	// Sets default values for this pawn's properties
-	ASoldier();
+    ASoldier();
 
-protected:
-	// Called when the game starts or when spawned
-	virtual void BeginPlay() override;
+    virtual void BeginPlay() override;
+    virtual void Tick(float DeltaTime) override;
 
-public:	
-	// Called every frame
-	virtual void Tick(float DeltaTime) override;
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stats") int32 MaxMovement;
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stats") EAttackType AttackType;
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stats") int32 AttackRange;
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stats") int32 MinDamage;
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stats") int32 MaxDamage;
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stats") int32 Health;
 
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stats")
-    int32 MaxMovement;
-
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stats")
-    EAttackType AttackType;
-
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stats")
-    int32 AttackRange;
-
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stats")
-    int32 MinDamage;
-
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stats")
-    int32 MaxDamage;
-
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stats")
-    int32 Health;
-
-    UFUNCTION(BlueprintCallable, Category = "Combat")
-    int32 GetRandomDamage() const;
+    UFUNCTION(BlueprintCallable, Category = "Combat") int32 GetRandomDamage() const;
 };

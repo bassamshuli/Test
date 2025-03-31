@@ -5,7 +5,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "Tile.h"
-#include "Blueprint/UserWidget.h"
+#include "WBP_Game.h"
 #include "Soldier.h"
 #include "Obstacles.h"
 #include "GameFeild.generated.h"
@@ -13,69 +13,50 @@
 UCLASS()
 class TEST_API AGameFeild : public AActor
 {
-	GENERATED_BODY()
+    GENERATED_BODY()
 
 public:
-	AGameFeild();
+    AGameFeild();
 
-	virtual void Tick(float DeltaTime) override;
-	virtual void OnConstruction(const FTransform& Transform) override;
+    virtual void Tick(float DeltaTime) override;
+    virtual void BeginPlay() override;
 
-	void HandleTileClicked(ATile* ClickedTile);
-	void StartGame();
-	void GenerateGrid();
-	void GenerateObstacles();
+    void HandleTileClicked(ATile* ClickedTile);
+    void StartGame();
 
 protected:
-	virtual void BeginPlay() override;
+    void GenerateGrid();
+    void GenerateObstacles();
+    void ShowPlacementMessage();
+    void ShowWelcomeMessage();
+    void NextTurn();
 
-	UFUNCTION()
-	void PlaceAIUnit();
+    UFUNCTION() void PlaceAIUnit();
 
-	bool bGameStarted = false;
-	bool bIsPlayerTurn = true;
-	int32 CurrentUnitIndex = 0;
+    // === GRID CONFIGURATION ===
+    UPROPERTY(EditAnywhere, Category = "Grid") int32 Rows = 25;
+    UPROPERTY(EditAnywhere, Category = "Grid") int32 Columns = 25;
+    UPROPERTY(EditAnywhere, Category = "Grid") float CellSize = 37.0f;
+    UPROPERTY(VisibleAnywhere, Category = "Grid") TArray<ATile*> Tiles;
+    UPROPERTY(EditAnywhere, Category = "Grid") TSubclassOf<AActor> TileBlueprint;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Grid")
-	int32 Rows;
+    // === OBSTACLES ===
+    UPROPERTY(EditAnywhere, Category = "Obstacles") TSubclassOf<AObstacles> MountainBlueprint;
+    UPROPERTY(EditAnywhere, Category = "Obstacles") TSubclassOf<AObstacles> TreeBlueprint;
+    UPROPERTY(EditAnywhere, Category = "Spawn") TSubclassOf<AObstacles> ObstacleToSpawn;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Grid")
-	int32 Columns;
+    // === UI ===
+    UPROPERTY(EditAnywhere, Category = "UI") TSubclassOf<UUserWidget> GameWidgetClass;
+    UPROPERTY() UWBP_Game* GameUIInstance;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Grid")
-	float CellSize;
+    // === SOLDIER SETUP ===
+    UPROPERTY(EditAnywhere, Category = "Setup") TSubclassOf<ASoldier> BP_Brawler_Green;
+    UPROPERTY(EditAnywhere, Category = "Setup") TSubclassOf<ASoldier> BP_Brawler_Red;
+    UPROPERTY(EditAnywhere, Category = "Setup") TSubclassOf<ASoldier> BP_Sniper_Green;
+    UPROPERTY(EditAnywhere, Category = "Setup") TSubclassOf<ASoldier> BP_Sniper_Red;
 
-	UPROPERTY(VisibleAnywhere, Category = "Grid")
-	TArray<ATile*> Tiles;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Grid")
-	TSubclassOf<AActor> TileBlueprint;
-
-	UPROPERTY(EditAnywhere, Category = "Obstacles")
-	TSubclassOf<AObstacles> MountainBlueprint;
-
-	UPROPERTY(EditAnywhere, Category = "Obstacles")
-	TSubclassOf<AObstacles> TreeBlueprint;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Spawn")
-	TSubclassOf<AObstacles> ObstacleToSpawn;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "UI")
-	TSubclassOf<UUserWidget> GameWidgetClass;
-
-	UUserWidget* GameWidgetInstance;
-
-	UPROPERTY(EditAnywhere, Category = "Setup")
-	TSubclassOf<ASoldier> BP_Brawler_Green;
-
-	UPROPERTY(EditAnywhere, Category = "Setup")
-	TSubclassOf<ASoldier> BP_Brawler_Red;
-
-	UPROPERTY(EditAnywhere, Category = "Setup")
-	TSubclassOf<ASoldier> BP_Sniper_Green;
-
-	UPROPERTY(EditAnywhere, Category = "Setup")
-	TSubclassOf<ASoldier> BP_Sniper_Red;
-
-	TArray<TSubclassOf<ASoldier>> SpawnQueue;
+    // === GAME STATE ===
+    TArray<TSubclassOf<ASoldier>> SpawnQueue;
+    int32 CurrentUnitIndex = 0;
+    bool bIsPlayerTurn = true;
 };

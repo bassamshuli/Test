@@ -3,25 +3,6 @@
 
 #include "Obstacles.h"
 
-// Sets default values
-AObstacles::AObstacles()
-{
- 	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
-	PrimaryActorTick.bCanEverTick = false;
-
-}
-
-// Called when the game starts or when spawned
-void AObstacles::BeginPlay()
-{
-	Super::BeginPlay();
-	
-}
-
-// Called every frame
-void AObstacles::Tick(float DeltaTime)
-{
-	Super::Tick(DeltaTime);
-
-}
+AObstacles::AObstacles() { PrimaryActorTick.bCanEverTick = false; }
+void AObstacles::BeginPlay() { Super::BeginPlay(); }
 

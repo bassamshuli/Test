@@ -3,12 +3,9 @@
 
 #include "BrawlerSoldier.h"
 
-// Sets default values
 ABrawlerSoldier::ABrawlerSoldier()
 {
- 	// Set this pawn to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
-	PrimaryActorTick.bCanEverTick = true;
-
+    PrimaryActorTick.bCanEverTick = true;
     MaxMovement = 6;
     AttackType = EAttackType::Melee;
     AttackRange = 1;
@@ -17,23 +14,8 @@ ABrawlerSoldier::ABrawlerSoldier()
     Health = 40;
 }
 
+void ABrawlerSoldier::BeginPlay() { Super::BeginPlay(); }
 
-
-
-
-// Called when the game starts or when spawned
-void ABrawlerSoldier::BeginPlay()
-{
-	Super::BeginPlay();
-	
-}
-
-// Called every frame
-void ABrawlerSoldier::Tick(float DeltaTime)
-{
-	Super::Tick(DeltaTime);
-
-}
 
 
 

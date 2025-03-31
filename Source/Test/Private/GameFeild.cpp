@@ -3,18 +3,14 @@
 
 #include "GameFeild.h"
 #include "Engine/World.h"
-#include "Tile.h"
-#include "Blueprint/UserWidget.h"
-#include "UObject/ConstructorHelpers.h"
 #include "Kismet/GameplayStatics.h"
+#include "Blueprint/UserWidget.h"
+#include "TimerManager.h"
+#include "EngineUtils.h"
 
 AGameFeild::AGameFeild()
 {
     PrimaryActorTick.bCanEverTick = false;
-
-    Rows = 25;
-    Columns = 25;
-    CellSize = 37.0f;
 
     static ConstructorHelpers::FClassFinder<AActor> TileBP(TEXT("/Game/Blueprints/BP_Tile"));
     if (TileBP.Succeeded()) TileBlueprint = TileBP.Class;
@@ -25,13 +21,10 @@ AGameFeild::AGameFeild()
     static ConstructorHelpers::FClassFinder<AObstacles> TreeBP(TEXT("/Game/Blueprints/BP_Tree"));
     if (TreeBP.Succeeded()) TreeBlueprint = TreeBP.Class;
 
-    ObstacleToSpawn = TreeBlueprint;
-}
+    static ConstructorHelpers::FClassFinder<UUserWidget> WidgetClassFinder(TEXT("/Game/Blueprints/WBP_Game"));
+    if (WidgetClassFinder.Succeeded()) GameWidgetClass = WidgetClassFinder.Class;
 
-void AGameFeild::OnConstruction(const FTransform& Transform)
-{
-    Super::OnConstruction(Transform);
-    GenerateGrid();
+    ObstacleToSpawn = TreeBlueprint;
 }
 
 void AGameFeild::BeginPlay()
@@ -46,21 +39,27 @@ void AGameFeild::BeginPlay()
         PC->bShowMouseCursor = true;
     }
 
+    GenerateGrid();
     GenerateObstacles();
 
     if (GameWidgetClass)
     {
-        GameWidgetInstance = CreateWidget<UUserWidget>(GetWorld(), GameWidgetClass);
-        if (GameWidgetInstance)
+        GameUIInstance = Cast<UWBP_Game>(CreateWidget<UUserWidget>(GetWorld(), GameWidgetClass));
+        if (GameUIInstance)
         {
-            GameWidgetInstance->AddToViewport();
+            GameUIInstance->AddToViewport();
+
+            if (GameUIInstance->StartButton)
+            {
+                GameUIInstance->StartButton->OnClicked.RemoveDynamic(GameUIInstance, &UWBP_Game::StartGameButtonClicked);
+                GameUIInstance->StartButton->OnClicked.AddDynamic(GameUIInstance, &UWBP_Game::StartGameButtonClicked);
+            }
+
+            ShowWelcomeMessage();
         }
     }
 
     SpawnQueue = { BP_Brawler_Green, BP_Brawler_Red, BP_Sniper_Green, BP_Sniper_Red };
-    CurrentUnitIndex = 0;
-    bIsPlayerTurn = true;
-    bGameStarted = true;
 }
 
 void AGameFeild::GenerateGrid()
@@ -93,6 +92,7 @@ void AGameFeild::GenerateGrid()
 void AGameFeild::GenerateObstacles()
 {
     if (!MountainBlueprint || !TreeBlueprint || Tiles.Num() == 0) return;
+
     UWorld* World = GetWorld();
     int32 NumObstacles = FMath::RoundToInt(Rows * Columns * 0.1f);
     TSet<int32> UsedIndices;
@@ -112,19 +112,16 @@ void AGameFeild::GenerateObstacles()
 
 void AGameFeild::HandleTileClicked(ATile* ClickedTile)
 {
-    if (!ClickedTile || !ClickedTile->IsTileFree()) return;
-    if (!bIsPlayerTurn || CurrentUnitIndex >= SpawnQueue.Num()) return;
+    if (!ClickedTile || !ClickedTile->IsTileFree() || !bIsPlayerTurn || CurrentUnitIndex >= SpawnQueue.Num()) return;
 
-    TSubclassOf<ASoldier> UnitToSpawn = SpawnQueue[CurrentUnitIndex];
     FVector Location = ClickedTile->GetActorLocation() + FVector(0, 0, 50);
+    ASoldier* NewUnit = GetWorld()->SpawnActor<ASoldier>(SpawnQueue[CurrentUnitIndex], Location, FRotator::ZeroRotator);
 
-    ASoldier* NewUnit = GetWorld()->SpawnActor<ASoldier>(UnitToSpawn, Location, FRotator::ZeroRotator);
     if (NewUnit)
     {
         ClickedTile->SetTileOccupied(true);
         CurrentUnitIndex++;
-        bIsPlayerTurn = false;
-        GetWorldTimerManager().SetTimerForNextTick(this, &AGameFeild::PlaceAIUnit);
+        NextTurn();
     }
 }
 
@@ -132,22 +129,15 @@ void AGameFeild::PlaceAIUnit()
 {
     if (CurrentUnitIndex >= SpawnQueue.Num()) return;
 
-    // 🔹 Filtra tutte le tile libere
     TArray<ATile*> FreeTiles;
     for (ATile* Tile : Tiles)
     {
-        if (Tile && Tile->IsTileFree())
-        {
-            FreeTiles.Add(Tile);
-        }
+        if (Tile && Tile->IsTileFree()) FreeTiles.Add(Tile);
     }
 
-    // 🔹 Se ci sono tile libere, scegli una a caso
     if (FreeTiles.Num() > 0)
     {
-        int32 RandomIndex = FMath::RandRange(0, FreeTiles.Num() - 1);
-        ATile* SelectedTile = FreeTiles[RandomIndex];
-
+        ATile* SelectedTile = FreeTiles[FMath::RandRange(0, FreeTiles.Num() - 1)];
         FVector SpawnLocation = SelectedTile->GetActorLocation() + FVector(0, 0, 50);
         ASoldier* AIUnit = GetWorld()->SpawnActor<ASoldier>(SpawnQueue[CurrentUnitIndex], SpawnLocation, FRotator::ZeroRotator);
 
@@ -156,16 +146,65 @@ void AGameFeild::PlaceAIUnit()
             SelectedTile->SetTileOccupied(true);
             CurrentUnitIndex++;
             bIsPlayerTurn = true;
+            ShowPlacementMessage();
         }
+    }
+}
+
+void AGameFeild::NextTurn()
+{
+    if (CurrentUnitIndex >= SpawnQueue.Num()) return;
+
+    bIsPlayerTurn = !bIsPlayerTurn;
+    ShowPlacementMessage();
+
+    if (!bIsPlayerTurn)
+    {
+        GetWorld()->GetTimerManager().SetTimerForNextTick(this, &AGameFeild::PlaceAIUnit);
+    }
+}
+
+void AGameFeild::ShowPlacementMessage()
+{
+    if (!GameUIInstance) return;
+
+    FString Message;
+    if (CurrentUnitIndex <= 1)
+        Message = bIsPlayerTurn ? TEXT("🎯 Player turn - Posiziona il tuo BRAWLER") : TEXT("🤖 AI turn - Posiziona il suo BRAWLER");
+    else
+        Message = bIsPlayerTurn ? TEXT("🎯 Player turn - Posiziona il tuo SNIPER") : TEXT("🤖 AI turn - Posiziona il suo SNIPER");
+
+    GameUIInstance->UpdateStatusMessage(FText::FromString(Message));
+}
+
+void AGameFeild::ShowWelcomeMessage()
+{
+    if (GameUIInstance)
+    {
+        GameUIInstance->UpdateStatusMessage(FText::FromString(TEXT("👋 Benvenuto! Premi Start per iniziare")));
     }
 }
 
 void AGameFeild::StartGame()
 {
-    bGameStarted = true;
+    CurrentUnitIndex = 0;
+    bIsPlayerTurn = FMath::RandBool();
+
+    if (bIsPlayerTurn)
+    {
+        SpawnQueue = { BP_Brawler_Green, BP_Brawler_Red, BP_Sniper_Green, BP_Sniper_Red };
+    }
+    else
+    {
+        SpawnQueue = { BP_Brawler_Red, BP_Brawler_Green, BP_Sniper_Red, BP_Sniper_Green };
+    }
+
+    ShowPlacementMessage();
+
+    if (!bIsPlayerTurn)
+    {
+        GetWorldTimerManager().SetTimerForNextTick(this, &AGameFeild::PlaceAIUnit);
+    }
 }
 
-void AGameFeild::Tick(float DeltaTime)
-{
-    Super::Tick(DeltaTime);
-}
+void AGameFeild::Tick(float DeltaTime) { Super::Tick(DeltaTime); }
