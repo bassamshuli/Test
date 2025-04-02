@@ -80,10 +80,14 @@ void ABaseGameMode::PlayerChoseStartingUnit(bool bBrawlerFirst)
     }
 
     CurrentUnitIndex = 0;
+
     if (GameUIInstance)
     {
         GameUIInstance->ShowPlacementMessage(true, CurrentUnitIndex);
     }
+
+    // 🛠️ AGGIUNGI QUESTO:
+    NextTurn(); // ⚠️ Abilita le tile per il primo posizionamento del player
 }
 
 void ABaseGameMode::NextTurn()
@@ -120,16 +124,85 @@ void ABaseGameMode::NextTurn()
 
 void ABaseGameMode::HandleTileClicked(ATile* ClickedTile)
 {
-    if (!ClickedTile || !ClickedTile->IsTileFree() || !bIsPlayerTurn) return;
-
-    FVector SpawnLocation = ClickedTile->GetActorLocation() + FVector(0, 0, 50);
-    ASoldier* PlayerUnit = GetWorld()->SpawnActor<ASoldier>(SpawnQueue[CurrentUnitIndex], SpawnLocation, FRotator::ZeroRotator);
-
-    if (PlayerUnit)
+    // 🧩 Se siamo nella fase di posizionamento
+    if (CurrentUnitIndex < SpawnQueue.Num() && bIsPlayerTurn && ClickedTile->IsTileFree())
     {
-        ClickedTile->SetTileOccupied(true);
-        CurrentUnitIndex++;
-        bIsPlayerTurn = false;
-        NextTurn();
+        FVector SpawnLocation = ClickedTile->GetActorLocation() + FVector(0, 0, 50);
+        ASoldier* NewSoldier = GetWorld()->SpawnActor<ASoldier>(SpawnQueue[CurrentUnitIndex], SpawnLocation, FRotator::ZeroRotator);
+
+        if (NewSoldier)
+        {
+            ClickedTile->SetTileOccupied(true);
+            NewSoldier->Team = ETeam::Player;
+            NewSoldier->OwningTile = ClickedTile;
+            CurrentUnitIndex++;
+
+            // Passa all'AI se finito
+            if (CurrentUnitIndex < SpawnQueue.Num())
+            {
+                bIsPlayerTurn = false;
+                NextTurn();
+            }
+            return;
+        }
+    }
+
+    // 🧩 Se siamo nella fase di selezione
+    if (!SelectedSoldier || SelectedSoldier->Team != ETeam::Player)
+    {
+        UE_LOG(LogTemp, Warning, TEXT("⚠️ Soldier selezionato non valido o non del team Player"));
+        return;
+    }
+
+    // Deseleziona precedente
+    if (SelectedSoldier_Current && SelectedSoldier_Current->OwningTile)
+    {
+        SelectedSoldier_Current->OwningTile->SetSelected(false);
+    }
+
+    SelectedSoldier_Current = SelectedSoldier;
+
+    // Seleziona nuovo
+    if (SelectedSoldier_Current && SelectedSoldier_Current->OwningTile)
+    {
+        SelectedSoldier_Current->OwningTile->SetSelected(true);
+        UE_LOG(LogTemp, Warning, TEXT("🟩 Soldier selezionato: %s"), *SelectedSoldier_Current->GetName());
+    }
+    else
+    {
+        UE_LOG(LogTemp, Error, TEXT("❌ SelectedSoldier o la sua tile è nullptr"));
+    }
+}
+
+void ABaseGameMode::HandleSoldierSelected(ASoldier* Soldier)
+{
+    if (!bIsPlayerTurn || !Soldier) return;
+
+    if (SelectedSoldier && SelectedSoldier->OwningTile)
+    {
+        SelectedSoldier->OwningTile->SetSelected(false);
+    }
+
+    SelectedSoldier = Soldier;
+
+    if (SelectedSoldier->OwningTile)
+    {
+        SelectedSoldier->OwningTile->SetSelected(true);
+    }
+    if (!SelectedSoldier || SelectedSoldier->Team != ETeam::Player) return;
+
+    // Deseleziona tutte le tile
+    for (ATile* Tile : Tiles)
+    {
+        if (Tile)
+        {
+            Tile->SetSelected(false);
+        }
+    }
+
+    // Evidenzia la tile del soldato selezionato
+    if (SelectedSoldier->OwningTile)
+    {
+        SelectedSoldier->OwningTile->SetSelected(true);
     }
 }

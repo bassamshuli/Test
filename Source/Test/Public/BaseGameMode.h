@@ -4,15 +4,11 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/GameModeBase.h"
+#include "Soldier.h"
 #include "Tile.h"
 #include "BaseGameMode.generated.h"
 
-UENUM(BlueprintType)
-enum class ETeam : uint8
-{
-    Player,
-    AI
-};
+
 
 UCLASS()
 class TEST_API ABaseGameMode : public AGameModeBase
@@ -65,4 +61,13 @@ public:
 
     UPROPERTY(BlueprintReadWrite)
     TArray<ATile*> Tiles;
+
+    UFUNCTION()
+    void HandleSoldierSelected(ASoldier* Soldier);
+
+    UPROPERTY()
+    ASoldier* SelectedSoldier = nullptr;
+
+    UPROPERTY()
+    class ASoldier* SelectedSoldier_Current = nullptr;
 };

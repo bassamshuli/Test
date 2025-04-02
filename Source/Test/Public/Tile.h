@@ -6,7 +6,7 @@
 #include "GameFramework/Actor.h"
 #include "Tile.generated.h"
 
-class ASoldier; // ✅ Forward declaration, evita includere Soldier.h qui
+class ASoldier;
 
 UCLASS()
 class TEST_API ATile : public AActor
@@ -16,11 +16,12 @@ class TEST_API ATile : public AActor
 public:
     ATile();
 
+    virtual void BeginPlay() override;
+
     UFUNCTION(BlueprintCallable) bool IsTileFree() const;
     UFUNCTION(BlueprintCallable) void SetTileOccupied(bool bOccupied);
     UFUNCTION() void OnTileClicked(AActor* TouchedActor, FKey ButtonPressed);
-
-    virtual void BeginPlay() override;
+    UFUNCTION() void SetSelected(bool bSelected);
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Grid")
     FVector2D GridPosition;
@@ -36,4 +37,10 @@ public:
 
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
     bool bHasObstacle = false;
+
+    UPROPERTY(EditAnywhere)
+    UMaterialInterface* DefaultMaterial;
+
+    UPROPERTY(EditAnywhere)
+    UMaterialInterface* SelectedMaterial;
 };
