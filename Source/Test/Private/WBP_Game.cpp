@@ -3,6 +3,7 @@
 
 #include "WBP_Game.h"
 #include "Kismet/GameplayStatics.h"
+#include "BaseGameMode.h"
 #include "GameFeild.h"
 
 bool UWBP_Game::Initialize()
@@ -20,11 +21,28 @@ bool UWBP_Game::Initialize()
 
 void UWBP_Game::StartGameButtonClicked()
 {
-    AGameFeild* GameFeild = Cast<AGameFeild>(UGameplayStatics::GetActorOfClass(GetWorld(), AGameFeild::StaticClass()));
-    if (GameFeild)
+    ABaseGameMode* GM = Cast<ABaseGameMode>(UGameplayStatics::GetGameMode(this));
+    if (GM)
     {
-        GameFeild->StartGame();
+        GM->StartGame();
     }
+}
+
+void UWBP_Game::ShowWelcomeMessage()
+{
+    UpdateStatusMessage(FText::FromString(TEXT("👋 Benvenuto! Premi Start per iniziare")));
+}
+
+void UWBP_Game::ShowPlacementMessage(bool bIsPlayerTurn, int32 CurrentUnitIndex)
+{
+    FString Message;
+
+    if (CurrentUnitIndex <= 1)
+        Message = bIsPlayerTurn ? TEXT("🎯 Player turn - Posiziona il tuo BRAWLER") : TEXT("🤖 AI turn - Posiziona il suo BRAWLER");
+    else
+        Message = bIsPlayerTurn ? TEXT("🎯 Player turn - Posiziona il tuo SNIPER") : TEXT("🤖 AI turn - Posiziona il suo SNIPER");
+
+    UpdateStatusMessage(FText::FromString(Message));
 }
 
 void UWBP_Game::UpdateStatusMessage(const FText& NewMessage)

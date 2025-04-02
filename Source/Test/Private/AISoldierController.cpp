@@ -2,26 +2,68 @@
 
 
 #include "AISoldierController.h"
+#include "Tile.h"
+#include "Soldier.h"
+#include "WBP_Game.h"
+#include "TimerManager.h"
+#include "Engine/World.h"
 
-// Sets default values
 AAISoldierController::AAISoldierController()
 {
- 	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
-	PrimaryActorTick.bCanEverTick = true;
-
+    PrimaryActorTick.bCanEverTick = true;
 }
 
-// Called when the game starts or when spawned
 void AAISoldierController::BeginPlay()
 {
-	Super::BeginPlay();
-	
+    Super::BeginPlay();
 }
 
-// Called every frame
 void AAISoldierController::Tick(float DeltaTime)
 {
-	Super::Tick(DeltaTime);
-
+    Super::Tick(DeltaTime);
 }
 
+void AAISoldierController::PlaceAIUnitDelayed(const TArray<ATile*>& Tiles, TArray<TSubclassOf<ASoldier>>& SpawnQueue, int32& CurrentUnitIndex, bool& bIsPlayerTurn, UWBP_Game* GameUIInstance)
+{
+    CachedTiles = Tiles;
+    CachedSpawnQueue = &SpawnQueue;
+    CachedCurrentUnitIndex = &CurrentUnitIndex;
+    CachedIsPlayerTurn = &bIsPlayerTurn;
+    CachedGameUI = GameUIInstance;
+
+    GetWorld()->GetTimerManager().SetTimer(DelayHandle, this, &AAISoldierController::PlaceAIUnit, 4.0f, false);
+}
+
+void AAISoldierController::PlaceAIUnit()
+{
+    if (!CachedSpawnQueue || !CachedCurrentUnitIndex || !CachedIsPlayerTurn || !CachedGameUI) return;
+    if (*CachedCurrentUnitIndex >= CachedSpawnQueue->Num()) return;
+
+    TArray<ATile*> FreeTiles;
+    for (ATile* Tile : CachedTiles)
+    {
+        if (Tile && Tile->IsTileFree() && !Tile->bHasObstacle)
+        {
+            FreeTiles.Add(Tile);
+        }
+    }
+
+    if (FreeTiles.Num() > 0)
+    {
+        ATile* SelectedTile = FreeTiles[FMath::RandRange(0, FreeTiles.Num() - 1)];
+        FVector SpawnLocation = SelectedTile->GetActorLocation() + FVector(0, 0, 50);
+        ASoldier* AIUnit = GetWorld()->SpawnActor<ASoldier>((*CachedSpawnQueue)[*CachedCurrentUnitIndex], SpawnLocation, FRotator::ZeroRotator);
+
+        if (AIUnit)
+        {
+            SelectedTile->SetTileOccupied(true);
+            (*CachedCurrentUnitIndex)++;
+            *CachedIsPlayerTurn = true;
+
+            if (CachedGameUI)
+            {
+                CachedGameUI->ShowPlacementMessage(*CachedIsPlayerTurn, *CachedCurrentUnitIndex);
+            }
+        }
+    }
+}

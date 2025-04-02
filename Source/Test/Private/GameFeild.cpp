@@ -2,6 +2,7 @@
 
 
 #include "GameFeild.h"
+#include "Tile.h"
 #include "Engine/World.h"
 #include "Kismet/GameplayStatics.h"
 #include "Blueprint/UserWidget.h"
@@ -48,14 +49,7 @@ void AGameFeild::BeginPlay()
         if (GameUIInstance)
         {
             GameUIInstance->AddToViewport();
-
-            if (GameUIInstance->StartButton)
-            {
-                GameUIInstance->StartButton->OnClicked.RemoveDynamic(GameUIInstance, &UWBP_Game::StartGameButtonClicked);
-                GameUIInstance->StartButton->OnClicked.AddDynamic(GameUIInstance, &UWBP_Game::StartGameButtonClicked);
-            }
-
-            ShowWelcomeMessage();
+            GameUIInstance->ShowWelcomeMessage();
         }
     }
 
@@ -106,105 +100,19 @@ void AGameFeild::GenerateObstacles()
             FVector Location = Tiles[Index]->GetActorLocation() + FVector(0, 0, 10);
             TSubclassOf<AObstacles> Obstacle = FMath::RandBool() ? MountainBlueprint : TreeBlueprint;
             World->SpawnActor<AObstacles>(Obstacle, Location, FRotator::ZeroRotator);
+            Tiles[Index]->bHasObstacle = true;
+            Tiles[Index]->SetTileOccupied(true);
         }
     }
 }
 
-void AGameFeild::HandleTileClicked(ATile* ClickedTile)
-{
-    if (!ClickedTile || !ClickedTile->IsTileFree() || !bIsPlayerTurn || CurrentUnitIndex >= SpawnQueue.Num()) return;
 
-    FVector Location = ClickedTile->GetActorLocation() + FVector(0, 0, 50);
-    ASoldier* NewUnit = GetWorld()->SpawnActor<ASoldier>(SpawnQueue[CurrentUnitIndex], Location, FRotator::ZeroRotator);
 
-    if (NewUnit)
-    {
-        ClickedTile->SetTileOccupied(true);
-        CurrentUnitIndex++;
-        NextTurn();
-    }
-}
 
-void AGameFeild::PlaceAIUnit()
-{
-    if (CurrentUnitIndex >= SpawnQueue.Num()) return;
 
-    TArray<ATile*> FreeTiles;
-    for (ATile* Tile : Tiles)
-    {
-        if (Tile && Tile->IsTileFree()) FreeTiles.Add(Tile);
-    }
 
-    if (FreeTiles.Num() > 0)
-    {
-        ATile* SelectedTile = FreeTiles[FMath::RandRange(0, FreeTiles.Num() - 1)];
-        FVector SpawnLocation = SelectedTile->GetActorLocation() + FVector(0, 0, 50);
-        ASoldier* AIUnit = GetWorld()->SpawnActor<ASoldier>(SpawnQueue[CurrentUnitIndex], SpawnLocation, FRotator::ZeroRotator);
 
-        if (AIUnit)
-        {
-            SelectedTile->SetTileOccupied(true);
-            CurrentUnitIndex++;
-            bIsPlayerTurn = true;
-            ShowPlacementMessage();
-        }
-    }
-}
 
-void AGameFeild::NextTurn()
-{
-    if (CurrentUnitIndex >= SpawnQueue.Num()) return;
 
-    bIsPlayerTurn = !bIsPlayerTurn;
-    ShowPlacementMessage();
-
-    if (!bIsPlayerTurn)
-    {
-        GetWorld()->GetTimerManager().SetTimerForNextTick(this, &AGameFeild::PlaceAIUnit);
-    }
-}
-
-void AGameFeild::ShowPlacementMessage()
-{
-    if (!GameUIInstance) return;
-
-    FString Message;
-    if (CurrentUnitIndex <= 1)
-        Message = bIsPlayerTurn ? TEXT("🎯 Player turn - Posiziona il tuo BRAWLER") : TEXT("🤖 AI turn - Posiziona il suo BRAWLER");
-    else
-        Message = bIsPlayerTurn ? TEXT("🎯 Player turn - Posiziona il tuo SNIPER") : TEXT("🤖 AI turn - Posiziona il suo SNIPER");
-
-    GameUIInstance->UpdateStatusMessage(FText::FromString(Message));
-}
-
-void AGameFeild::ShowWelcomeMessage()
-{
-    if (GameUIInstance)
-    {
-        GameUIInstance->UpdateStatusMessage(FText::FromString(TEXT("👋 Benvenuto! Premi Start per iniziare")));
-    }
-}
-
-void AGameFeild::StartGame()
-{
-    CurrentUnitIndex = 0;
-    bIsPlayerTurn = FMath::RandBool();
-
-    if (bIsPlayerTurn)
-    {
-        SpawnQueue = { BP_Brawler_Green, BP_Brawler_Red, BP_Sniper_Green, BP_Sniper_Red };
-    }
-    else
-    {
-        SpawnQueue = { BP_Brawler_Red, BP_Brawler_Green, BP_Sniper_Red, BP_Sniper_Green };
-    }
-
-    ShowPlacementMessage();
-
-    if (!bIsPlayerTurn)
-    {
-        GetWorldTimerManager().SetTimerForNextTick(this, &AGameFeild::PlaceAIUnit);
-    }
-}
 
 void AGameFeild::Tick(float DeltaTime) { Super::Tick(DeltaTime); }

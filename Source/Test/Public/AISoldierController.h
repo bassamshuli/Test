@@ -6,21 +6,35 @@
 #include "GameFramework/Actor.h"
 #include "AISoldierController.generated.h"
 
+class ATile;
+class ASoldier;
+class UWBP_Game;
+
 UCLASS()
 class TEST_API AAISoldierController : public AActor
 {
-	GENERATED_BODY()
-	
-public:	
-	// Sets default values for this actor's properties
-	AAISoldierController();
+    GENERATED_BODY()
+
+public:
+    AAISoldierController();
 
 protected:
-	// Called when the game starts or when spawned
-	virtual void BeginPlay() override;
+    virtual void BeginPlay() override;
 
-public:	
-	// Called every frame
-	virtual void Tick(float DeltaTime) override;
+public:
+    virtual void Tick(float DeltaTime) override;
 
+    UFUNCTION(BlueprintCallable)
+    void PlaceAIUnitDelayed(const TArray<ATile*>& Tiles, TArray<TSubclassOf<ASoldier>>& SpawnQueue, int32& CurrentUnitIndex, bool& bIsPlayerTurn, UWBP_Game* GameUIInstance);
+
+private:
+    void PlaceAIUnit();
+
+    TArray<ATile*> CachedTiles;
+    TArray<TSubclassOf<ASoldier>>* CachedSpawnQueue = nullptr;
+    int32* CachedCurrentUnitIndex = nullptr;
+    bool* CachedIsPlayerTurn = nullptr;
+    UWBP_Game* CachedGameUI = nullptr;
+
+    FTimerHandle DelayHandle;
 };

@@ -21,4 +21,10 @@ public:
 
     UPROPERTY(meta = (BindWidget)) UTextBlock* StatusText;
     UPROPERTY(meta = (BindWidget)) UButton* StartButton;
+
+    UFUNCTION(BlueprintCallable, Category = "UI")
+    void ShowWelcomeMessage();
+
+    UFUNCTION(BlueprintCallable, Category = "UI")
+    void ShowPlacementMessage(bool bIsPlayerTurn, int32 CurrentUnitIndex);
 };

@@ -21,17 +21,14 @@ public:
     virtual void Tick(float DeltaTime) override;
     virtual void BeginPlay() override;
 
-    void HandleTileClicked(ATile* ClickedTile);
-    void StartGame();
+    
 
-protected:
+
+
     void GenerateGrid();
     void GenerateObstacles();
-    void ShowPlacementMessage();
-    void ShowWelcomeMessage();
-    void NextTurn();
 
-    UFUNCTION() void PlaceAIUnit();
+ 
 
     // === GRID CONFIGURATION ===
     UPROPERTY(EditAnywhere, Category = "Grid") int32 Rows = 25;
