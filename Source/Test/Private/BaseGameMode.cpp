@@ -133,9 +133,7 @@ void ABaseGameMode::NextTurn()
                     break;
                 }
 
-                // Dopo che l’AI ha giocato, passa il turno al player e chiama NextTurn
-                bIsPlayerTurn = true;
-                NextTurn();
+
             });
     }
 }

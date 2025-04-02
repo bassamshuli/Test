@@ -1,8 +1,10 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 
 #include "AISoldierController.h"
 #include "Tile.h"
+#include "BaseGameMode.h"               
+#include "Kismet/GameplayStatics.h"     
 #include "Soldier.h"
 #include "WBP_Game.h"
 #include "TimerManager.h"
@@ -63,6 +65,16 @@ void AAISoldierController::PlaceAIUnit()
             if (CachedGameUI)
             {
                 CachedGameUI->ShowPlacementMessage(*CachedIsPlayerTurn, *CachedCurrentUnitIndex);
+            }
+
+            // ✅ Chiama il GameMode per continuare il turno
+            if (GetWorld())
+            {
+                ABaseGameMode* GameMode = Cast<ABaseGameMode>(UGameplayStatics::GetGameMode(GetWorld()));
+                if (GameMode)
+                {
+                    GameMode->NextTurn();
+                }
             }
         }
     }
