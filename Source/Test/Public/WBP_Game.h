@@ -21,10 +21,17 @@ public:
 
     UPROPERTY(meta = (BindWidget)) UTextBlock* StatusText;
     UPROPERTY(meta = (BindWidget)) UButton* StartButton;
+    UPROPERTY(meta = (BindWidget)) UButton* ButtonChooseBrawler;
+    UPROPERTY(meta = (BindWidget)) UButton* ButtonChooseSniper;
+ 
 
-    UFUNCTION(BlueprintCallable, Category = "UI")
-    void ShowWelcomeMessage();
+    UFUNCTION(BlueprintCallable, Category = "UI") void ShowWelcomeMessage();
+    UFUNCTION(BlueprintCallable, Category = "UI") void ShowPlacementMessage(bool bIsPlayerTurn, int32 CurrentUnitIndex);
+    UFUNCTION(BlueprintCallable, Category = "UI") void ShowChooseUnitTypeUI();
+    void HideChooseButtons();
 
-    UFUNCTION(BlueprintCallable, Category = "UI")
-    void ShowPlacementMessage(bool bIsPlayerTurn, int32 CurrentUnitIndex);
+    UFUNCTION() void OnBrawlerChosen();
+    UFUNCTION() void OnSniperChosen();
+
+    class ABaseGameMode* GameModeRef;
 };

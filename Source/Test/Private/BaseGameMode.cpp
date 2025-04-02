@@ -15,7 +15,6 @@ void ABaseGameMode::BeginPlay()
 {
     Super::BeginPlay();
 
-    // Spawna AI Controller se non presente
     bool bAIControllerFound = false;
     for (TActorIterator<AAISoldierController> It(GetWorld()); It; ++It)
     {
@@ -27,17 +26,6 @@ void ABaseGameMode::BeginPlay()
     {
         FActorSpawnParameters SpawnParams;
         GetWorld()->SpawnActor<AAISoldierController>(AAISoldierController::StaticClass(), FVector::ZeroVector, FRotator::ZeroRotator, SpawnParams);
-        UE_LOG(LogTemp, Warning, TEXT("🤖 AAISoldierController spawnato dinamicamente."));
-    }
-
-    for (TActorIterator<AGameFeild> It(GetWorld()); It; ++It)
-    {
-        UWBP_Game* UI = It->GameUIInstance;
-        if (UI)
-        {
-            GameUIInstance = UI;
-            break;
-        }
     }
 
     for (TActorIterator<AGameFeild> It(GetWorld()); It; ++It)
@@ -47,21 +35,15 @@ void ABaseGameMode::BeginPlay()
         break;
     }
 
-
-    UWorld* World = GetWorld();
-    if (World)
+    APlayerController* PlayerController = UGameplayStatics::GetPlayerController(GetWorld(), 0);
+    if (PlayerController)
     {
-        APlayerController* PlayerController = UGameplayStatics::GetPlayerController(World, 0);
-        if (PlayerController)
+        for (TActorIterator<ACameraActor> It(GetWorld()); It; ++It)
         {
-            for (TActorIterator<ACameraActor> It(World); It; ++It)
+            if (It->GetName().Contains("BP_Camera"))
             {
-                if (It->GetName().Contains("BP_Camera"))
-                {
-                    PlayerController->SetViewTargetWithBlend(*It, 0.0f);
-                    UE_LOG(LogTemp, Warning, TEXT("✅ Camera impostata con successo da BeginPlay!"));
-                    break;
-                }
+                PlayerController->SetViewTargetWithBlend(*It, 0.0f);
+                break;
             }
         }
     }
@@ -74,39 +56,41 @@ void ABaseGameMode::StartGame()
 
     if (bIsPlayerTurn)
     {
-        SpawnQueue = { BP_Brawler_Green, BP_Brawler_Red, BP_Sniper_Green, BP_Sniper_Red };
+        if (GameUIInstance)
+        {
+            GameUIInstance->ShowChooseUnitTypeUI();
+        }
     }
     else
     {
         SpawnQueue = { BP_Brawler_Red, BP_Brawler_Green, BP_Sniper_Red, BP_Sniper_Green };
+        GetWorldTimerManager().SetTimerForNextTick(this, &ABaseGameMode::NextTurn);
     }
+}
 
-    UE_LOG(LogTemp, Warning, TEXT("🎯 SpawnQueue contiene %d elementi"), SpawnQueue.Num());
-    for (int32 i = 0; i < SpawnQueue.Num(); ++i)
+void ABaseGameMode::PlayerChoseStartingUnit(bool bBrawlerFirst)
+{
+    if (bBrawlerFirst)
     {
-        UE_LOG(LogTemp, Warning, TEXT("➡️ Index %d: %s"), i, *GetNameSafe(SpawnQueue[i]));
+        SpawnQueue = { BP_Brawler_Green, BP_Brawler_Red, BP_Sniper_Green, BP_Sniper_Red };
+    }
+    else
+    {
+        SpawnQueue = { BP_Sniper_Green, BP_Sniper_Red, BP_Brawler_Green, BP_Brawler_Red };
     }
 
+    CurrentUnitIndex = 0;
     if (GameUIInstance)
     {
-        GameUIInstance->ShowPlacementMessage(bIsPlayerTurn, CurrentUnitIndex);
-    }
-
-    if (!bIsPlayerTurn)
-    {
-        GetWorldTimerManager().SetTimerForNextTick(this, &ABaseGameMode::NextTurn);
+        GameUIInstance->ShowPlacementMessage(true, CurrentUnitIndex);
     }
 }
 
 void ABaseGameMode::NextTurn()
 {
-    UE_LOG(LogTemp, Warning, TEXT("🔁 NextTurn chiamato - Turno: %s - CurrentUnitIndex: %d"),
-        bIsPlayerTurn ? TEXT("Player") : TEXT("AI"),
-        CurrentUnitIndex);
-
     if (CurrentUnitIndex >= SpawnQueue.Num()) return;
 
-    if (bIsPlayerTurn && CurrentUnitIndex < SpawnQueue.Num())
+    if (bIsPlayerTurn)
     {
         for (ATile* Tile : Tiles)
         {
@@ -124,19 +108,16 @@ void ABaseGameMode::NextTurn()
 
     if (!bIsPlayerTurn)
     {
-        GetWorldTimerManager().SetTimerForNextTick([this]()
+        GetWorldTimerManager().SetTimerForNextTick([this]() {
+            for (TActorIterator<AAISoldierController> It(GetWorld()); It; ++It)
             {
-                // Trova il controller AI
-                for (TActorIterator<AAISoldierController> It(GetWorld()); It; ++It)
-                {
-                    It->PlaceAIUnitDelayed(Tiles, SpawnQueue, CurrentUnitIndex, bIsPlayerTurn, GameUIInstance);
-                    break;
-                }
-
-
+                It->PlaceAIUnitDelayed(Tiles, SpawnQueue, CurrentUnitIndex, bIsPlayerTurn, GameUIInstance);
+                break;
+            }
             });
     }
 }
+
 void ABaseGameMode::HandleTileClicked(ATile* ClickedTile)
 {
     if (!ClickedTile || !ClickedTile->IsTileFree() || !bIsPlayerTurn) return;
@@ -148,10 +129,7 @@ void ABaseGameMode::HandleTileClicked(ATile* ClickedTile)
     {
         ClickedTile->SetTileOccupied(true);
         CurrentUnitIndex++;
-
-        // Passa il turno all'IA
         bIsPlayerTurn = false;
         NextTurn();
     }
 }
-

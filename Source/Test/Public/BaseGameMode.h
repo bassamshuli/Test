@@ -33,6 +33,12 @@ public:
     UFUNCTION()
     void NextTurn();
 
+    UFUNCTION()
+    void HandleTileClicked(ATile* ClickedTile);
+
+    UFUNCTION(BlueprintCallable)
+    void PlayerChoseStartingUnit(bool bBrawlerFirst);
+
     UPROPERTY(BlueprintReadOnly)
     int32 CurrentUnitIndex = 0;
 
@@ -59,8 +65,4 @@ public:
 
     UPROPERTY(BlueprintReadWrite)
     TArray<ATile*> Tiles;
-
-    UFUNCTION()
-    void HandleTileClicked(ATile* ClickedTile);
 };
-
