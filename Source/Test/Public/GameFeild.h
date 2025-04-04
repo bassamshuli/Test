@@ -21,9 +21,6 @@ public:
     virtual void Tick(float DeltaTime) override;
     virtual void BeginPlay() override;
 
-    
-
-
 
     void GenerateGrid();
     void GenerateObstacles();
@@ -56,4 +53,7 @@ public:
     TArray<TSubclassOf<ASoldier>> SpawnQueue;
     int32 CurrentUnitIndex = 0;
     bool bIsPlayerTurn = true;
+
+    UFUNCTION()
+    ATile* GetTileAt(int32 X, int32 Y) const;
 };

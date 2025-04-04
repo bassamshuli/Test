@@ -134,10 +134,12 @@ void ABaseGameMode::HandleTileClicked(ATile* ClickedTile)
         {
             ClickedTile->SetTileOccupied(true);
             NewSoldier->Team = ETeam::Player;
-            NewSoldier->OwningTile = ClickedTile;
+
+            // 🔧 Forza l'assegnazione corretta della tile
+            NewSoldier->TryAssignOwningTile(Tiles);
+
             CurrentUnitIndex++;
 
-            // Passa all'AI se finito
             if (CurrentUnitIndex < SpawnQueue.Num())
             {
                 bIsPlayerTurn = false;
@@ -178,20 +180,13 @@ void ABaseGameMode::HandleSoldierSelected(ASoldier* Soldier)
 {
     if (!bIsPlayerTurn || !Soldier) return;
 
+    // Deseleziona precedente
     if (SelectedSoldier && SelectedSoldier->OwningTile)
     {
         SelectedSoldier->OwningTile->SetSelected(false);
     }
 
-    SelectedSoldier = Soldier;
-
-    if (SelectedSoldier->OwningTile)
-    {
-        SelectedSoldier->OwningTile->SetSelected(true);
-    }
-    if (!SelectedSoldier || SelectedSoldier->Team != ETeam::Player) return;
-
-    // Deseleziona tutte le tile
+    // Deseleziona tutte le tile precedenti
     for (ATile* Tile : Tiles)
     {
         if (Tile)
@@ -200,9 +195,16 @@ void ABaseGameMode::HandleSoldierSelected(ASoldier* Soldier)
         }
     }
 
-    // Evidenzia la tile del soldato selezionato
+    SelectedSoldier = Soldier;
+
     if (SelectedSoldier->OwningTile)
     {
         SelectedSoldier->OwningTile->SetSelected(true);
+    }
+
+    // Mostra le celle raggiungibili
+    if (SelectedSoldier->Team == ETeam::Player)
+    {
+        SelectedSoldier->ShowMovableTiles(Tiles);
     }
 }

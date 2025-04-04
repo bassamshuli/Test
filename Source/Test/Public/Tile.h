@@ -23,8 +23,9 @@ public:
     UFUNCTION() void OnTileClicked(AActor* TouchedActor, FKey ButtonPressed);
     UFUNCTION() void SetSelected(bool bSelected);
 
+
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Grid")
-    FVector2D GridPosition;
+    FIntPoint GridPosition;
 
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Grid")
     bool bIsOccupied;

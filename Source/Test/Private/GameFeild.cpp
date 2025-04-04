@@ -77,6 +77,7 @@ void AGameFeild::GenerateGrid()
             AActor* SpawnedTile = World->SpawnActor<AActor>(TileBlueprint, Location, FRotator::ZeroRotator);
             if (ATile* Tile = Cast<ATile>(SpawnedTile))
             {
+                Tile->GridPosition = FIntPoint(Col, Row);
                 Tiles.Add(Tile);
             }
         }
@@ -105,14 +106,15 @@ void AGameFeild::GenerateObstacles()
         }
     }
 }
-
-
-
-
-
-
-
-
-
-
+ATile* AGameFeild::GetTileAt(int32 X, int32 Y) const
+{
+    for (ATile* Tile : Tiles)
+    {
+        if (Tile && Tile->GridPosition.X == X && Tile->GridPosition.Y == Y)
+        {
+            return Tile;
+        }
+    }
+    return nullptr;
+}
 void AGameFeild::Tick(float DeltaTime) { Super::Tick(DeltaTime); }

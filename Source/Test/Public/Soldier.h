@@ -1,4 +1,4 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 #pragma once
 
@@ -44,15 +44,21 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stats") int32 MaxDamage;
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stats") int32 Health;
 
-    UFUNCTION(BlueprintCallable, Category = "Combat")
-    int32 GetRandomDamage() const;
-
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
     ETeam Team;
 
     UPROPERTY()
     ATile* OwningTile;
 
+    UFUNCTION(BlueprintCallable, Category = "Combat")
+    int32 GetRandomDamage() const;
+
     UFUNCTION()
     void OnSoldierClicked(AActor* TouchedActor, FKey ButtonPressed);
+
+    UFUNCTION()
+    void ShowMovableTiles(const TArray<ATile*>& AllTiles);
+
+    UFUNCTION()
+    void TryAssignOwningTile(const TArray<ATile*>& AllTiles); // ✅ Nuovo metodo
 };
