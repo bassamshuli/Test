@@ -83,6 +83,7 @@ void ABaseGameMode::PlayerChoseStartingUnit(bool bBrawlerFirst)
 
     if (GameUIInstance)
     {
+        GameUIInstance->SetSpawnQueue(SpawnQueue);
         GameUIInstance->ShowPlacementMessage(true, CurrentUnitIndex);
     }
 
@@ -107,6 +108,7 @@ void ABaseGameMode::NextTurn()
 
     if (GameUIInstance)
     {
+        GameUIInstance->SetSpawnQueue(SpawnQueue);
         GameUIInstance->ShowPlacementMessage(bIsPlayerTurn, CurrentUnitIndex);
     }
 
@@ -134,16 +136,27 @@ void ABaseGameMode::HandleTileClicked(ATile* ClickedTile)
         {
             ClickedTile->SetTileOccupied(true);
             NewSoldier->Team = ETeam::Player;
-
-            // 🔧 Forza l'assegnazione corretta della tile
             NewSoldier->TryAssignOwningTile(Tiles);
-
             CurrentUnitIndex++;
 
             if (CurrentUnitIndex < SpawnQueue.Num())
             {
                 bIsPlayerTurn = false;
                 NextTurn();
+            }
+            else
+            {
+                // Tutti i soldati sono stati posizionati
+                bActionPhaseStarted = true;
+                CurrentTurnTeam = bIsPlayerTurn ? ETeam::Player : ETeam::AI;
+
+                if (GameUIInstance)
+                {
+                    FString Message = CurrentTurnTeam == ETeam::Player
+                        ? TEXT("🎯 Player turn")
+                        : TEXT("🤖 AI turn");
+                    GameUIInstance->UpdateStatusMessage(FText::FromString(Message));
+                }
             }
             return;
         }
@@ -164,7 +177,6 @@ void ABaseGameMode::HandleTileClicked(ATile* ClickedTile)
 
     SelectedSoldier_Current = SelectedSoldier;
 
-    // Seleziona nuovo
     if (SelectedSoldier_Current && SelectedSoldier_Current->OwningTile)
     {
         SelectedSoldier_Current->OwningTile->SetSelected(true);
@@ -173,6 +185,20 @@ void ABaseGameMode::HandleTileClicked(ATile* ClickedTile)
     else
     {
         UE_LOG(LogTemp, Error, TEXT("❌ SelectedSoldier o la sua tile è nullptr"));
+    }
+
+    // 🔁 Turno alternato cliccando qualsiasi tile (TEMPORANEO)
+    if (bActionPhaseStarted)
+    {
+        CurrentTurnTeam = (CurrentTurnTeam == ETeam::Player) ? ETeam::AI : ETeam::Player;
+
+        if (GameUIInstance)
+        {
+            FString Message = CurrentTurnTeam == ETeam::Player
+                ? TEXT("🎯 Player turn")
+                : TEXT("🤖 AI turn");
+            GameUIInstance->UpdateStatusMessage(FText::FromString(Message));
+        }
     }
 }
 

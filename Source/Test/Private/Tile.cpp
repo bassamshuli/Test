@@ -18,6 +18,13 @@ void ATile::BeginPlay()
 {
     Super::BeginPlay();
     OnClicked.AddUniqueDynamic(this, &ATile::OnTileClicked);
+
+    UStaticMeshComponent* Mesh = FindComponentByClass<UStaticMeshComponent>();
+    if (Mesh && DefaultMaterial)
+    {
+        Mesh->SetMaterial(0, DefaultMaterial);
+        UE_LOG(LogTemp, Warning, TEXT("🟫 Tile %s inizializzato con materiale di default."), *GetName());
+    }
 }
 
 void ATile::OnTileClicked(AActor* TouchedActor, FKey ButtonPressed)

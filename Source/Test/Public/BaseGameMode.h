@@ -70,4 +70,7 @@ public:
 
     UPROPERTY()
     class ASoldier* SelectedSoldier_Current = nullptr;
+
+    bool bActionPhaseStarted = false;
+    ETeam CurrentTurnTeam;
 };

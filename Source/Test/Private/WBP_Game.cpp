@@ -46,10 +46,13 @@ void UWBP_Game::ShowPlacementMessage(bool bIsPlayerTurn, int32 CurrentUnitIndex)
 {
     FString Message;
 
-    if (CurrentUnitIndex <= 1)
-        Message = bIsPlayerTurn ? TEXT("🎯 Player turn - Posiziona il tuo BRAWLER") : TEXT("🤖 AI turn - Posiziona il suo BRAWLER");
+    FString UnitName = SpawnQueue.IsValidIndex(CurrentUnitIndex) ? SpawnQueue[CurrentUnitIndex]->GetName() : TEXT("Unità");
+    bool bIsBrawler = UnitName.Contains("Brawler");
+
+    if (bIsPlayerTurn)
+        Message = FString::Printf(TEXT("🎯 Player turn - Posiziona il tuo %s"), bIsBrawler ? TEXT("BRAWLER") : TEXT("SNIPER"));
     else
-        Message = bIsPlayerTurn ? TEXT("🎯 Player turn - Posiziona il tuo SNIPER") : TEXT("🤖 AI turn - Posiziona il suo SNIPER");
+        Message = FString::Printf(TEXT("🤖 AI turn - Posiziona il suo %s"), bIsBrawler ? TEXT("BRAWLER") : TEXT("SNIPER"));
 
     UpdateStatusMessage(FText::FromString(Message));
 }
@@ -110,4 +113,8 @@ void UWBP_Game::UpdateStatusMessage(const FText& NewMessage)
     {
         StatusText->SetText(NewMessage);
     }
+}
+void UWBP_Game::SetSpawnQueue(const TArray<TSubclassOf<class ASoldier>>& InQueue)
+{
+    SpawnQueue = InQueue;
 }

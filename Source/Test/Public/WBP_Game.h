@@ -34,4 +34,10 @@ public:
     UFUNCTION() void OnSniperChosen();
 
     class ABaseGameMode* GameModeRef;
+
+public:
+    void SetSpawnQueue(const TArray<TSubclassOf<class ASoldier>>& InQueue);
+
+private:
+    TArray<TSubclassOf<class ASoldier>> SpawnQueue;
 };
