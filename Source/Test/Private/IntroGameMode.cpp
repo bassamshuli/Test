@@ -8,7 +8,7 @@
 AIntroGameMode::AIntroGameMode(const FObjectInitializer& ObjectInitializer)
     : Super(ObjectInitializer)
 {
-    static ConstructorHelpers::FClassFinder<UUserWidget> WidgetClass(TEXT("/Game/BluePrints/WBP_StartMenu")); // <-- path corretto!
+    static ConstructorHelpers::FClassFinder<UUserWidget> WidgetClass(TEXT("/Game/BluePrints/BP_Widgets/WBP_StartMenu")); // <-- path corretto!
     if (WidgetClass.Succeeded())
     {
         StartMenuWidgetClass = WidgetClass.Class;

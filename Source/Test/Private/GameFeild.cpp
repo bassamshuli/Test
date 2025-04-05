@@ -13,16 +13,16 @@ AGameFeild::AGameFeild()
 {
     PrimaryActorTick.bCanEverTick = false;
 
-    static ConstructorHelpers::FClassFinder<AActor> TileBP(TEXT("/Game/Blueprints/BP_Tile"));
+    static ConstructorHelpers::FClassFinder<AActor> TileBP(TEXT("/Game/Blueprints/BP_FeildAndMode/BP_Tile"));
     if (TileBP.Succeeded()) TileBlueprint = TileBP.Class;
 
-    static ConstructorHelpers::FClassFinder<AObstacles> MountainBP(TEXT("/Game/Blueprints/BP_Mountain"));
+    static ConstructorHelpers::FClassFinder<AObstacles> MountainBP(TEXT("/Game/Blueprints/BP_Obstacles/BP_Mountain"));
     if (MountainBP.Succeeded()) MountainBlueprint = MountainBP.Class;
 
-    static ConstructorHelpers::FClassFinder<AObstacles> TreeBP(TEXT("/Game/Blueprints/BP_Tree"));
+    static ConstructorHelpers::FClassFinder<AObstacles> TreeBP(TEXT("/Game/Blueprints/BP_Obstacles/BP_Tree"));
     if (TreeBP.Succeeded()) TreeBlueprint = TreeBP.Class;
 
-    static ConstructorHelpers::FClassFinder<UUserWidget> WidgetClassFinder(TEXT("/Game/Blueprints/WBP_Game"));
+    static ConstructorHelpers::FClassFinder<UUserWidget> WidgetClassFinder(TEXT("/Game/Blueprints/BP_Widgets/WBP_Game"));
     if (WidgetClassFinder.Succeeded()) GameWidgetClass = WidgetClassFinder.Class;
 
     ObstacleToSpawn = TreeBlueprint;
