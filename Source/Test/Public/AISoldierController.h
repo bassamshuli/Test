@@ -6,9 +6,10 @@
 #include "GameFramework/Actor.h"
 #include "AISoldierController.generated.h"
 
+class ABaseGameMode;
 class ATile;
-class ASoldier;
 class UWBP_Game;
+class ASoldier;
 
 UCLASS()
 class TEST_API AAISoldierController : public AActor
@@ -17,24 +18,22 @@ class TEST_API AAISoldierController : public AActor
 
 public:
     AAISoldierController();
-
-protected:
     virtual void BeginPlay() override;
-
-public:
     virtual void Tick(float DeltaTime) override;
 
-    UFUNCTION(BlueprintCallable)
-    void PlaceAIUnitDelayed(const TArray<ATile*>& Tiles, TArray<TSubclassOf<ASoldier>>& SpawnQueue, int32& CurrentUnitIndex, bool& bIsPlayerTurn, UWBP_Game* GameUIInstance);
+    void PlaceAIUnitDelayed(
+        const TArray<ATile*>& Tiles,
+        const TArray<TSubclassOf<ASoldier>>& SpawnQueue,
+        UWBP_Game* GameUI,
+        ABaseGameMode* GameMode);
 
 private:
     void PlaceAIUnit();
 
     TArray<ATile*> CachedTiles;
-    TArray<TSubclassOf<ASoldier>>* CachedSpawnQueue = nullptr;
-    int32* CachedCurrentUnitIndex = nullptr;
-    bool* CachedIsPlayerTurn = nullptr;
-    UWBP_Game* CachedGameUI = nullptr;
+    const TArray<TSubclassOf<ASoldier>>* CachedSpawnQueue;
+    UWBP_Game* CachedGameUI;
+    ABaseGameMode* CachedGameMode;
 
     FTimerHandle DelayHandle;
 };

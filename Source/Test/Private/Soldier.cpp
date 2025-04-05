@@ -60,6 +60,7 @@ void ASoldier::TryAssignOwningTile(const TArray<ATile*>& AllTiles)
         if (Tile && FVector::Dist2D(Tile->GetActorLocation(), GetActorLocation()) < 10.0f)
         {
             OwningTile = Tile;
+            Tile->SetTileOccupied(true);
             UE_LOG(LogTemp, Warning, TEXT("🔁 OwningTile trovata automaticamente: (%d, %d) per %s"),
                 Tile->GridPosition.X, Tile->GridPosition.Y, *GetName());
             break;
@@ -119,7 +120,7 @@ void ASoldier::ShowMovableTiles(const TArray<ATile*>& AllTiles)
             continue;
 
         ATile* Tile = TileMap.FindRef(Pos);
-        if (Tile && Tile->IsTileFree())
+        if (Tile && Tile != OwningTile && !Tile->bIsOccupied && !Tile->bHasObstacle)
         {
             Tile->SetSelected(true);
         }

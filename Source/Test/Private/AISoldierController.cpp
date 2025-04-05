@@ -3,8 +3,8 @@
 
 #include "AISoldierController.h"
 #include "Tile.h"
-#include "BaseGameMode.h"               
-#include "Kismet/GameplayStatics.h"     
+#include "BaseGameMode.h"
+#include "Kismet/GameplayStatics.h"
 #include "Soldier.h"
 #include "WBP_Game.h"
 #include "TimerManager.h"
@@ -25,21 +25,24 @@ void AAISoldierController::Tick(float DeltaTime)
     Super::Tick(DeltaTime);
 }
 
-void AAISoldierController::PlaceAIUnitDelayed(const TArray<ATile*>& Tiles, TArray<TSubclassOf<ASoldier>>& SpawnQueue, int32& CurrentUnitIndex, bool& bIsPlayerTurn, UWBP_Game* GameUIInstance)
+void AAISoldierController::PlaceAIUnitDelayed(
+    const TArray<ATile*>& Tiles,
+    const TArray<TSubclassOf<ASoldier>>& SpawnQueue,
+    UWBP_Game* GameUI,
+    ABaseGameMode* GameMode)
 {
     CachedTiles = Tiles;
     CachedSpawnQueue = &SpawnQueue;
-    CachedCurrentUnitIndex = &CurrentUnitIndex;
-    CachedIsPlayerTurn = &bIsPlayerTurn;
-    CachedGameUI = GameUIInstance;
+    CachedGameUI = GameUI;
+    CachedGameMode = GameMode;
 
-    GetWorld()->GetTimerManager().SetTimer(DelayHandle, this, &AAISoldierController::PlaceAIUnit, 4.0f, false);
+    GetWorld()->GetTimerManager().SetTimer(DelayHandle, this, &AAISoldierController::PlaceAIUnit, 2.0f, false);
 }
 
 void AAISoldierController::PlaceAIUnit()
 {
-    if (!CachedSpawnQueue || !CachedCurrentUnitIndex || !CachedIsPlayerTurn || !CachedGameUI) return;
-    if (*CachedCurrentUnitIndex >= CachedSpawnQueue->Num()) return;
+    if (!CachedGameMode || !CachedSpawnQueue) return;
+    if (CachedGameMode->CurrentUnitIndex >= CachedSpawnQueue->Num()) return;
 
     TArray<ATile*> FreeTiles;
     for (ATile* Tile : CachedTiles)
@@ -54,27 +57,29 @@ void AAISoldierController::PlaceAIUnit()
     {
         ATile* SelectedTile = FreeTiles[FMath::RandRange(0, FreeTiles.Num() - 1)];
         FVector SpawnLocation = SelectedTile->GetActorLocation() + FVector(0, 0, 50);
-        ASoldier* AIUnit = GetWorld()->SpawnActor<ASoldier>((*CachedSpawnQueue)[*CachedCurrentUnitIndex], SpawnLocation, FRotator::ZeroRotator);
+        ASoldier* AIUnit = GetWorld()->SpawnActor<ASoldier>((*CachedSpawnQueue)[CachedGameMode->CurrentUnitIndex], SpawnLocation, FRotator::ZeroRotator);
 
         if (AIUnit)
         {
             SelectedTile->SetTileOccupied(true);
-            (*CachedCurrentUnitIndex)++;
-            *CachedIsPlayerTurn = true;
+            AIUnit->Team = ETeam::AI;
+            AIUnit->TryAssignOwningTile(CachedTiles);
+
+            CachedGameMode->CurrentUnitIndex++;
+            CachedGameMode->bIsPlayerTurn = true;
 
             if (CachedGameUI)
             {
-                CachedGameUI->ShowPlacementMessage(*CachedIsPlayerTurn, *CachedCurrentUnitIndex);
+                CachedGameUI->ShowPlacementMessage(true, CachedGameMode->CurrentUnitIndex);
             }
 
-            // ✅ Chiama il GameMode per continuare il turno
-            if (GetWorld())
+            if (CachedGameMode->CurrentUnitIndex >= CachedSpawnQueue->Num())
             {
-                ABaseGameMode* GameMode = Cast<ABaseGameMode>(UGameplayStatics::GetGameMode(GetWorld()));
-                if (GameMode)
-                {
-                    GameMode->NextTurn();
-                }
+                CachedGameMode->OnPlacementPhaseComplete();
+            }
+            else
+            {
+                CachedGameMode->NextTurn();
             }
         }
     }

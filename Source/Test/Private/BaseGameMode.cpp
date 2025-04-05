@@ -1,5 +1,4 @@
 ﻿// Fill out your copyright notice in the Description page of Project Settings.
-
 #include "BaseGameMode.h"
 #include "Camera/CameraActor.h"
 #include "GameFeild.h"
@@ -51,7 +50,8 @@ void ABaseGameMode::BeginPlay()
 void ABaseGameMode::StartGame()
 {
     CurrentUnitIndex = 0;
-    bIsPlayerTurn = FMath::RandBool(); // Coin flip
+    bIsPlayerTurn = FMath::RandBool();
+    StartingTeam = bIsPlayerTurn ? ETeam::Player : ETeam::AI;
 
     if (bIsPlayerTurn)
     {
@@ -76,7 +76,6 @@ void ABaseGameMode::StartGame()
 void ABaseGameMode::SetupAISpawnQueue()
 {
     bool bBrawlerFirst = FMath::RandBool();
-
     if (bBrawlerFirst)
     {
         SpawnQueue = { BP_Brawler_Red, BP_Brawler_Green, BP_Sniper_Red, BP_Sniper_Green };
@@ -106,12 +105,16 @@ void ABaseGameMode::PlayerChoseStartingUnit(bool bBrawlerFirst)
         GameUIInstance->ShowPlacementMessage(true, CurrentUnitIndex);
     }
 
-    NextTurn(); // Avvia posizionamento player
+    NextTurn();
 }
 
 void ABaseGameMode::NextTurn()
 {
-    if (CurrentUnitIndex >= SpawnQueue.Num()) return;
+    if (CurrentUnitIndex >= SpawnQueue.Num())
+    {
+        OnPlacementPhaseComplete();
+        return;
+    }
 
     if (bIsPlayerTurn)
     {
@@ -135,10 +138,24 @@ void ABaseGameMode::NextTurn()
         GetWorldTimerManager().SetTimerForNextTick([this]() {
             for (TActorIterator<AAISoldierController> It(GetWorld()); It; ++It)
             {
-                It->PlaceAIUnitDelayed(Tiles, SpawnQueue, CurrentUnitIndex, bIsPlayerTurn, GameUIInstance);
+                It->PlaceAIUnitDelayed(Tiles, SpawnQueue, GameUIInstance, this);
                 break;
             }
             });
+    }
+}
+
+void ABaseGameMode::OnPlacementPhaseComplete()
+{
+    bActionPhaseStarted = true;
+    CurrentTurnTeam = StartingTeam;
+
+    if (GameUIInstance)
+    {
+        FString Message = CurrentTurnTeam == ETeam::Player
+            ? TEXT("🎯 Player turn")
+            : TEXT("🤖 AI turn");
+        GameUIInstance->UpdateStatusMessage(FText::FromString(Message));
     }
 }
 
@@ -163,54 +180,9 @@ void ABaseGameMode::HandleTileClicked(ATile* ClickedTile)
             }
             else
             {
-                bActionPhaseStarted = true;
-                CurrentTurnTeam = bIsPlayerTurn ? ETeam::Player : ETeam::AI;
-
-                if (GameUIInstance)
-                {
-                    FString Message = CurrentTurnTeam == ETeam::Player
-                        ? TEXT("🎯 Player turn")
-                        : TEXT("🤖 AI turn");
-                    GameUIInstance->UpdateStatusMessage(FText::FromString(Message));
-                }
+                OnPlacementPhaseComplete();
             }
             return;
-        }
-    }
-
-    if (!SelectedSoldier || SelectedSoldier->Team != ETeam::Player)
-    {
-        UE_LOG(LogTemp, Warning, TEXT("⚠️ Soldier selezionato non valido o non del team Player"));
-        return;
-    }
-
-    if (SelectedSoldier_Current && SelectedSoldier_Current->OwningTile)
-    {
-        SelectedSoldier_Current->OwningTile->SetSelected(false);
-    }
-
-    SelectedSoldier_Current = SelectedSoldier;
-
-    if (SelectedSoldier_Current && SelectedSoldier_Current->OwningTile)
-    {
-        SelectedSoldier_Current->OwningTile->SetSelected(true);
-        UE_LOG(LogTemp, Warning, TEXT("🟩 Soldier selezionato: %s"), *SelectedSoldier_Current->GetName());
-    }
-    else
-    {
-        UE_LOG(LogTemp, Error, TEXT("❌ SelectedSoldier o la sua tile è nullptr"));
-    }
-
-    if (bActionPhaseStarted)
-    {
-        CurrentTurnTeam = (CurrentTurnTeam == ETeam::Player) ? ETeam::AI : ETeam::Player;
-
-        if (GameUIInstance)
-        {
-            FString Message = CurrentTurnTeam == ETeam::Player
-                ? TEXT("🎯 Player turn")
-                : TEXT("🤖 AI turn");
-            GameUIInstance->UpdateStatusMessage(FText::FromString(Message));
         }
     }
 }

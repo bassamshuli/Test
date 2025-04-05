@@ -1,4 +1,4 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 #pragma once
 
@@ -8,8 +8,6 @@
 #include "Tile.h"
 #include "BaseGameMode.generated.h"
 
-
-
 UCLASS()
 class TEST_API ABaseGameMode : public AGameModeBase
 {
@@ -18,14 +16,12 @@ class TEST_API ABaseGameMode : public AGameModeBase
 public:
     ABaseGameMode();
     virtual void BeginPlay() override;
-    void SetupAISpawnQueue();
-
-    UPROPERTY(BlueprintReadOnly) ETeam CurrentTeam;
-    UPROPERTY(BlueprintReadOnly) int32 PlayerUnitsToPlace = 2;
-    UPROPERTY(BlueprintReadOnly) int32 AIUnitsToPlace = 2;
 
     UFUNCTION(BlueprintCallable)
     void StartGame();
+
+    UFUNCTION()
+    void PlayerChoseStartingUnit(bool bBrawlerFirst);
 
     UFUNCTION()
     void NextTurn();
@@ -33,8 +29,13 @@ public:
     UFUNCTION()
     void HandleTileClicked(ATile* ClickedTile);
 
-    UFUNCTION(BlueprintCallable)
-    void PlayerChoseStartingUnit(bool bBrawlerFirst);
+    UFUNCTION()
+    void HandleSoldierSelected(ASoldier* Soldier);
+
+    UFUNCTION()
+    void OnPlacementPhaseComplete();
+
+    void SetupAISpawnQueue();
 
     UPROPERTY(BlueprintReadOnly)
     int32 CurrentUnitIndex = 0;
@@ -63,15 +64,13 @@ public:
     UPROPERTY(BlueprintReadWrite)
     TArray<ATile*> Tiles;
 
-    UFUNCTION()
-    void HandleSoldierSelected(ASoldier* Soldier);
-
     UPROPERTY()
     ASoldier* SelectedSoldier = nullptr;
 
     UPROPERTY()
-    class ASoldier* SelectedSoldier_Current = nullptr;
+    ASoldier* SelectedSoldier_Current = nullptr;
 
     bool bActionPhaseStarted = false;
     ETeam CurrentTurnTeam;
+    ETeam StartingTeam;
 };
