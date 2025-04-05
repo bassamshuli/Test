@@ -21,6 +21,9 @@ public:
 
     UPROPERTY(meta = (BindWidget)) UTextBlock* StatusText;
     UPROPERTY(meta = (BindWidget)) UButton* StartButton;
+
+    UPROPERTY(meta = (BindWidget))
+    class UButton* ResetButton;
     UPROPERTY(meta = (BindWidget)) UButton* ButtonChooseBrawler;
     UPROPERTY(meta = (BindWidget)) UButton* ButtonChooseSniper;
  
@@ -32,6 +35,8 @@ public:
 
     UFUNCTION() void OnBrawlerChosen();
     UFUNCTION() void OnSniperChosen();
+    UFUNCTION()
+    void ResetGameButtonClicked();
 
     class ABaseGameMode* GameModeRef;
 

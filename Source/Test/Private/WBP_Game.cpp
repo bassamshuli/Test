@@ -13,12 +13,20 @@ bool UWBP_Game::Initialize()
     if (StartButton)
     {
         StartButton->OnClicked.AddUniqueDynamic(this, &UWBP_Game::StartGameButtonClicked);
+        StartButton->SetVisibility(ESlateVisibility::Visible); // Mostra Start
+    }
+
+    if (ResetButton)
+    {
+        ResetButton->OnClicked.AddUniqueDynamic(this, &UWBP_Game::ResetGameButtonClicked);
+        ResetButton->SetVisibility(ESlateVisibility::Collapsed); // Nascondi Reset
     }
 
     if (ButtonChooseBrawler)
     {
         ButtonChooseBrawler->OnClicked.AddDynamic(this, &UWBP_Game::OnBrawlerChosen);
     }
+
     if (ButtonChooseSniper)
     {
         ButtonChooseSniper->OnClicked.AddDynamic(this, &UWBP_Game::OnSniperChosen);
@@ -35,6 +43,28 @@ void UWBP_Game::StartGameButtonClicked()
     {
         GameModeRef->StartGame();
     }
+
+    // 🔁 Cambio visibilità pulsanti
+    if (StartButton)
+        StartButton->SetVisibility(ESlateVisibility::Collapsed);
+
+    if (ResetButton)
+        ResetButton->SetVisibility(ESlateVisibility::Visible);
+}
+
+void UWBP_Game::ResetGameButtonClicked()
+{
+    if (GameModeRef)
+    {
+        GameModeRef->ResetGame(); // ⚠️ assicurati che questa funzione esista
+    }
+
+    // Torna allo stato iniziale
+    if (StartButton)
+        StartButton->SetVisibility(ESlateVisibility::Visible);
+
+    if (ResetButton)
+        ResetButton->SetVisibility(ESlateVisibility::Collapsed);
 }
 
 void UWBP_Game::ShowWelcomeMessage()
@@ -88,9 +118,9 @@ void UWBP_Game::HideChooseButtons()
 {
     if (ButtonChooseBrawler)
         ButtonChooseBrawler->SetVisibility(ESlateVisibility::Collapsed);
+
     if (ButtonChooseSniper)
         ButtonChooseSniper->SetVisibility(ESlateVisibility::Collapsed);
-    // Non serve cancellare lo StatusText, sarà sovrascritto da ShowPlacementMessage()
 }
 
 void UWBP_Game::OnBrawlerChosen()
@@ -114,6 +144,7 @@ void UWBP_Game::UpdateStatusMessage(const FText& NewMessage)
         StatusText->SetText(NewMessage);
     }
 }
+
 void UWBP_Game::SetSpawnQueue(const TArray<TSubclassOf<class ASoldier>>& InQueue)
 {
     SpawnQueue = InQueue;

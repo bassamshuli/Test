@@ -73,4 +73,7 @@ public:
     bool bActionPhaseStarted = false;
     ETeam CurrentTurnTeam;
     ETeam StartingTeam;
+
+    UFUNCTION(BlueprintCallable)
+    void ResetGame();
 };

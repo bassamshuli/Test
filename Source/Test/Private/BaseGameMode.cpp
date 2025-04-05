@@ -216,3 +216,53 @@ void ABaseGameMode::HandleSoldierSelected(ASoldier* Soldier)
         SelectedSoldier->ShowMovableTiles(Tiles);
     }
 }
+
+void ABaseGameMode::ResetGame()
+{
+    // 1. Cancella tutti i soldati
+    for (TActorIterator<ASoldier> It(GetWorld()); It; ++It)
+    {
+        It->Destroy();
+    }
+
+    // 2. Cancella tutti gli ostacoli
+    for (TActorIterator<AObstacles> It(GetWorld()); It; ++It)
+    {
+        It->Destroy();
+    }
+
+    // 3. Pulisce le tile esistenti (reset)
+    for (ATile* Tile : Tiles)
+    {
+        if (Tile)
+        {
+            Tile->SetTileOccupied(false);
+            Tile->bHasObstacle = false;
+            Tile->SetSelected(false);
+        }
+    }
+
+    // 4. Rigenera nuovi ostacoli
+    for (TActorIterator<AGameFeild> It(GetWorld()); It; ++It)
+    {
+        It->GenerateObstacles(); // 💡 chiamata alla funzione già esistente
+        break;
+    }
+
+    // 5. Reset variabili interne
+    bIsPlayerTurn = true;
+    CurrentUnitIndex = 0;
+    bActionPhaseStarted = false;
+    SelectedSoldier = nullptr;
+    SelectedSoldier_Current = nullptr;
+    SpawnQueue.Empty();
+
+    // 6. Mostra messaggio di benvenuto e resetta UI
+    if (GameUIInstance)
+    {
+        GameUIInstance->ShowWelcomeMessage(); // mostra messaggio
+        GameUIInstance->SetSpawnQueue(SpawnQueue); // svuota coda
+    }
+
+    UE_LOG(LogTemp, Warning, TEXT("♻️ Reset completato!"));
+}
