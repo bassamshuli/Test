@@ -18,6 +18,7 @@ class TEST_API ABaseGameMode : public AGameModeBase
 public:
     ABaseGameMode();
     virtual void BeginPlay() override;
+    void SetupAISpawnQueue();
 
     UPROPERTY(BlueprintReadOnly) ETeam CurrentTeam;
     UPROPERTY(BlueprintReadOnly) int32 PlayerUnitsToPlace = 2;

@@ -1,6 +1,5 @@
 ﻿// Fill out your copyright notice in the Description page of Project Settings.
 
-
 #include "BaseGameMode.h"
 #include "Camera/CameraActor.h"
 #include "GameFeild.h"
@@ -52,7 +51,7 @@ void ABaseGameMode::BeginPlay()
 void ABaseGameMode::StartGame()
 {
     CurrentUnitIndex = 0;
-    bIsPlayerTurn = FMath::RandBool();
+    bIsPlayerTurn = FMath::RandBool(); // Coin flip
 
     if (bIsPlayerTurn)
     {
@@ -63,8 +62,28 @@ void ABaseGameMode::StartGame()
     }
     else
     {
-        SpawnQueue = { BP_Brawler_Red, BP_Brawler_Green, BP_Sniper_Red, BP_Sniper_Green };
+        SetupAISpawnQueue();
+        if (GameUIInstance)
+        {
+            GameUIInstance->SetSpawnQueue(SpawnQueue);
+            GameUIInstance->ShowPlacementMessage(false, CurrentUnitIndex);
+        }
+
         GetWorldTimerManager().SetTimerForNextTick(this, &ABaseGameMode::NextTurn);
+    }
+}
+
+void ABaseGameMode::SetupAISpawnQueue()
+{
+    bool bBrawlerFirst = FMath::RandBool();
+
+    if (bBrawlerFirst)
+    {
+        SpawnQueue = { BP_Brawler_Red, BP_Brawler_Green, BP_Sniper_Red, BP_Sniper_Green };
+    }
+    else
+    {
+        SpawnQueue = { BP_Sniper_Red, BP_Sniper_Green, BP_Brawler_Red, BP_Brawler_Green };
     }
 }
 
@@ -87,8 +106,7 @@ void ABaseGameMode::PlayerChoseStartingUnit(bool bBrawlerFirst)
         GameUIInstance->ShowPlacementMessage(true, CurrentUnitIndex);
     }
 
-    // 🛠️ AGGIUNGI QUESTO:
-    NextTurn(); // ⚠️ Abilita le tile per il primo posizionamento del player
+    NextTurn(); // Avvia posizionamento player
 }
 
 void ABaseGameMode::NextTurn()
@@ -126,7 +144,6 @@ void ABaseGameMode::NextTurn()
 
 void ABaseGameMode::HandleTileClicked(ATile* ClickedTile)
 {
-    // 🧩 Se siamo nella fase di posizionamento
     if (CurrentUnitIndex < SpawnQueue.Num() && bIsPlayerTurn && ClickedTile->IsTileFree())
     {
         FVector SpawnLocation = ClickedTile->GetActorLocation() + FVector(0, 0, 50);
@@ -146,7 +163,6 @@ void ABaseGameMode::HandleTileClicked(ATile* ClickedTile)
             }
             else
             {
-                // Tutti i soldati sono stati posizionati
                 bActionPhaseStarted = true;
                 CurrentTurnTeam = bIsPlayerTurn ? ETeam::Player : ETeam::AI;
 
@@ -162,14 +178,12 @@ void ABaseGameMode::HandleTileClicked(ATile* ClickedTile)
         }
     }
 
-    // 🧩 Se siamo nella fase di selezione
     if (!SelectedSoldier || SelectedSoldier->Team != ETeam::Player)
     {
         UE_LOG(LogTemp, Warning, TEXT("⚠️ Soldier selezionato non valido o non del team Player"));
         return;
     }
 
-    // Deseleziona precedente
     if (SelectedSoldier_Current && SelectedSoldier_Current->OwningTile)
     {
         SelectedSoldier_Current->OwningTile->SetSelected(false);
@@ -187,7 +201,6 @@ void ABaseGameMode::HandleTileClicked(ATile* ClickedTile)
         UE_LOG(LogTemp, Error, TEXT("❌ SelectedSoldier o la sua tile è nullptr"));
     }
 
-    // 🔁 Turno alternato cliccando qualsiasi tile (TEMPORANEO)
     if (bActionPhaseStarted)
     {
         CurrentTurnTeam = (CurrentTurnTeam == ETeam::Player) ? ETeam::AI : ETeam::Player;
@@ -206,13 +219,11 @@ void ABaseGameMode::HandleSoldierSelected(ASoldier* Soldier)
 {
     if (!bIsPlayerTurn || !Soldier) return;
 
-    // Deseleziona precedente
     if (SelectedSoldier && SelectedSoldier->OwningTile)
     {
         SelectedSoldier->OwningTile->SetSelected(false);
     }
 
-    // Deseleziona tutte le tile precedenti
     for (ATile* Tile : Tiles)
     {
         if (Tile)
@@ -228,7 +239,6 @@ void ABaseGameMode::HandleSoldierSelected(ASoldier* Soldier)
         SelectedSoldier->OwningTile->SetSelected(true);
     }
 
-    // Mostra le celle raggiungibili
     if (SelectedSoldier->Team == ETeam::Player)
     {
         SelectedSoldier->ShowMovableTiles(Tiles);
