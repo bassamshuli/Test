@@ -5,6 +5,7 @@
 #include "BaseGameMode.h"
 #include "Containers/Queue.h"
 #include "Containers/Set.h"
+#include "EngineUtils.h"
 #include "Kismet/GameplayStatics.h"
 
 ASoldier::ASoldier()
@@ -98,7 +99,8 @@ void ASoldier::ShowMovableTiles(const TArray<ATile*>& AllTiles)
         if (Tile)
         {
             TileMap.Add(Tile->GridPosition, Tile);
-            Tile->SetSelected(false);
+            Tile->SetSelected(false);             // reset blu
+            Tile->SetEnemyHighlighted(false);     // reset rosso
         }
     }
 
@@ -140,6 +142,28 @@ void ASoldier::ShowMovableTiles(const TArray<ATile*>& AllTiles)
                 {
                     Queue.Enqueue(TPair<FIntPoint, int32>(Next, Distance + 1));
                     Visited.Add(Next);
+                }
+            }
+        }
+    }
+
+    // 🔺 Evidenzia le tile nemiche adiacenti all'OwningTile
+    for (ATile* Tile : AllTiles)
+    {
+        if (!Tile || !Tile->bIsOccupied || Tile->bHasObstacle)
+            continue;
+
+        // Solo se il tile è adiacente (in griglia)
+        int32 GridDistance = FMath::Abs(Tile->GridPosition.X - Start.X) + FMath::Abs(Tile->GridPosition.Y - Start.Y);
+        if (GridDistance <= AttackRange)
+        {
+            for (TActorIterator<ASoldier> It(GetWorld()); It; ++It)
+            {
+                ASoldier* Enemy = *It;
+                if (Enemy->Team != ETeam::Player && Enemy->OwningTile == Tile)
+                {
+                    Tile->SetEnemyHighlighted(true);
+                    break;
                 }
             }
         }

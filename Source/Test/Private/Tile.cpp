@@ -62,3 +62,19 @@ void ATile::SetSelected(bool bSelected)
         UE_LOG(LogTemp, Error, TEXT("❌ StaticMeshComponent NON trovato in %s"), *GetName());
     }
 }
+
+void ATile::SetEnemyHighlighted(bool bHighlight)
+{
+    UStaticMeshComponent* Mesh = FindComponentByClass<UStaticMeshComponent>();
+    if (Mesh)
+    {
+        if (bHighlight && EnemyMaterial)
+        {
+            Mesh->SetMaterial(0, EnemyMaterial);
+        }
+        else if (DefaultMaterial)
+        {
+            Mesh->SetMaterial(0, DefaultMaterial);
+        }
+    }
+}

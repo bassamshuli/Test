@@ -44,4 +44,10 @@ public:
 
     UPROPERTY(EditAnywhere)
     UMaterialInterface* SelectedMaterial;
+
+    UPROPERTY(EditDefaultsOnly)
+    UMaterialInterface* EnemyMaterial;
+
+    UFUNCTION()
+    void SetEnemyHighlighted(bool bHighlight);
 };
