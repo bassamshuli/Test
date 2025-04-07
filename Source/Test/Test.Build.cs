@@ -12,9 +12,9 @@ public class Test : ModuleRules
 
 		PrivateDependencyModuleNames.AddRange(new string[] {  });
 
-        PublicIncludePaths.AddRange(new string[] {"Test/Public","Test/Obstacles/Public","Test/GameIntro/Public", "Test/Soldiers/Public", "Test/Feild&PositioningPhase/Public" });
+        PublicIncludePaths.AddRange(new string[] {"Test/Public","Test/Obstacles/Public","Test/GameIntro/Public", "Test/Soldiers/Public", "Test/GameFeildAndPositioningPhase/Public" });
 
-        PrivateIncludePaths.AddRange(new string[] {"Test/Private","Test/Obstacles/Private","Test/GameIntro/Private","Test/Soldiers/Private", "Test/Feild&PositioningPhase/Private" });
+        PrivateIncludePaths.AddRange(new string[] {"Test/Private","Test/Obstacles/Private","Test/GameIntro/Private","Test/Soldiers/Private", "Test/GameFeildAndPositioningPhase/Private" });
         // Uncomment if you are using Slate UI
         // PrivateDependencyModuleNames.AddRange(new string[] { "Slate", "SlateCore" });
 

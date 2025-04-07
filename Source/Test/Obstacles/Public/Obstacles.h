@@ -15,13 +15,9 @@ class TEST_API AObstacles : public AActor
 
 public:
     AObstacles();
+    void InitWithSprite(const FString& SpritePath);
 
 protected:
-    virtual void BeginPlay() override;
-
-public:
     UPROPERTY(VisibleAnywhere)
     UPaperSpriteComponent* SpriteComponent;
-
-    void InitWithSprite(const FString& SpritePath);
 };

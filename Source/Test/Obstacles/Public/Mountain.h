@@ -2,19 +2,14 @@
 
 #pragma once
 
-#include "CoreMinimal.h"
 #include "Obstacles.h"
 #include "Mountain.generated.h"
 
-/**
- * 
- */
 UCLASS()
 class TEST_API AMountain : public AObstacles
 {
-	GENERATED_BODY()
+    GENERATED_BODY()
 
 public:
-	AMountain();
-	
+    AMountain();
 };

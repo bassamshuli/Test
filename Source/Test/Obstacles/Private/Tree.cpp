@@ -8,6 +8,3 @@ ATree::ATree()
     InitWithSprite(TEXT("/Game/Sprites/Tree_Sprite"));
     SpriteComponent->SetRelativeScale3D(FVector(0.3f, 0.3f, 0.3f));
 }
-
-
-
