@@ -1,6 +1,5 @@
 ﻿// Fill out your copyright notice in the Description page of Project Settings.
 
-
 #include "GameFeild.h"
 #include "Tile.h"
 #include "Engine/World.h"
@@ -15,13 +14,12 @@ AGameFeild::AGameFeild()
 {
     PrimaryActorTick.bCanEverTick = false;
 
-    static ConstructorHelpers::FClassFinder<AActor> TileBP(TEXT("/Game/Blueprints/BP_FeildAndMode/BP_Tile"));
-    if (TileBP.Succeeded()) TileBlueprint = TileBP.Class;
+    // Usa la classe C++ Tile direttamente
+    // (non più blueprint)
 
     static ConstructorHelpers::FClassFinder<UUserWidget> WidgetClassFinder(TEXT("/Game/Blueprints/BP_Widgets/WBP_Game"));
     if (WidgetClassFinder.Succeeded()) GameWidgetClass = WidgetClassFinder.Class;
 
-    // Usa le classi C++ direttamente
     MountainBlueprint = AMountain::StaticClass();
     TreeBlueprint = ATree::StaticClass();
     ObstacleToSpawn = TreeBlueprint;
@@ -51,14 +49,10 @@ void AGameFeild::BeginPlay()
             GameUIInstance->ShowWelcomeMessage();
         }
     }
-
-    SpawnQueue = { BP_Brawler_Green, BP_Brawler_Red, BP_Sniper_Green, BP_Sniper_Red };
 }
 
 void AGameFeild::GenerateGrid()
 {
-    if (!TileBlueprint) return;
-
     UWorld* World = GetWorld();
     if (!World) return;
 
@@ -73,11 +67,15 @@ void AGameFeild::GenerateGrid()
         for (int32 Col = 0; Col < Columns; ++Col)
         {
             FVector Location(StartX + Col * AdjustedCellSize, StartY + Row * AdjustedCellSize, 0);
-            AActor* SpawnedTile = World->SpawnActor<AActor>(TileBlueprint, Location, FRotator::ZeroRotator);
+            AActor* SpawnedTile = World->SpawnActor<AActor>(ATile::StaticClass(), Location, FRotator::ZeroRotator);
             if (ATile* Tile = Cast<ATile>(SpawnedTile))
             {
                 Tile->GridPosition = FIntPoint(Col, Row);
                 Tiles.Add(Tile);
+            }
+            else
+            {
+                UE_LOG(LogTemp, Error, TEXT("❌ Tile NULL a posizione (%d, %d)"), Col, Row);
             }
         }
     }
@@ -94,7 +92,7 @@ void AGameFeild::GenerateObstacles()
     while (UsedIndices.Num() < NumObstacles)
     {
         int32 Index = FMath::RandRange(0, Tiles.Num() - 1);
-        if (!UsedIndices.Contains(Index))
+        if (!UsedIndices.Contains(Index) && Tiles[Index])
         {
             UsedIndices.Add(Index);
             FVector Location = Tiles[Index]->GetActorLocation() + FVector(0, 0, 10);
@@ -116,6 +114,7 @@ void AGameFeild::GenerateObstacles()
         }
     }
 }
+
 ATile* AGameFeild::GetTileAt(int32 X, int32 Y) const
 {
     for (ATile* Tile : Tiles)
@@ -127,4 +126,5 @@ ATile* AGameFeild::GetTileAt(int32 X, int32 Y) const
     }
     return nullptr;
 }
+
 void AGameFeild::Tick(float DeltaTime) { Super::Tick(DeltaTime); }

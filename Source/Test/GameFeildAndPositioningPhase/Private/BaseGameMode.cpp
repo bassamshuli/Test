@@ -1,4 +1,5 @@
 ﻿// Fill out your copyright notice in the Description page of Project Settings.
+
 #include "BaseGameMode.h"
 #include "Camera/CameraActor.h"
 #include "GameFeild.h"
@@ -6,24 +7,21 @@
 #include "AISoldierController.h"
 #include "Kismet/GameplayStatics.h"
 #include "EngineUtils.h"
+#include "SniperSoldier.h"
+#include "BrawlerSoldier.h"
 
-ABaseGameMode::ABaseGameMode() {}
+ABaseGameMode::ABaseGameMode()
+{
+    SpawnQueue.Empty();
+}
 
 void ABaseGameMode::BeginPlay()
 {
     Super::BeginPlay();
 
-    bool bAIControllerFound = false;
-    for (TActorIterator<AAISoldierController> It(GetWorld()); It; ++It)
+    if (!TActorIterator<AAISoldierController>(GetWorld()))
     {
-        bAIControllerFound = true;
-        break;
-    }
-
-    if (!bAIControllerFound)
-    {
-        FActorSpawnParameters SpawnParams;
-        GetWorld()->SpawnActor<AAISoldierController>(AAISoldierController::StaticClass(), FVector::ZeroVector, FRotator::ZeroRotator, SpawnParams);
+        GetWorld()->SpawnActor<AAISoldierController>(AAISoldierController::StaticClass(), FVector::ZeroVector, FRotator::ZeroRotator);
     }
 
     for (TActorIterator<AGameFeild> It(GetWorld()); It; ++It)
@@ -68,7 +66,6 @@ void ABaseGameMode::StartGame()
             GameUIInstance->SetSpawnQueue(SpawnQueue);
             GameUIInstance->ShowPlacementMessage(false, CurrentUnitIndex);
         }
-
         GetWorldTimerManager().SetTimerForNextTick(this, &ABaseGameMode::NextTurn);
     }
 }
@@ -76,25 +73,31 @@ void ABaseGameMode::StartGame()
 void ABaseGameMode::SetupAISpawnQueue()
 {
     bool bBrawlerFirst = FMath::RandBool();
+    TSubclassOf<ASoldier> BrawlerClass = ABrawlerSoldier::StaticClass();
+    TSubclassOf<ASoldier> SniperClass = ASniperSoldier::StaticClass();
+
     if (bBrawlerFirst)
     {
-        SpawnQueue = { BP_Brawler_Red, BP_Brawler_Green, BP_Sniper_Red, BP_Sniper_Green };
+        SpawnQueue = { BrawlerClass, BrawlerClass, SniperClass, SniperClass };
     }
     else
     {
-        SpawnQueue = { BP_Sniper_Red, BP_Sniper_Green, BP_Brawler_Red, BP_Brawler_Green };
+        SpawnQueue = { SniperClass, SniperClass, BrawlerClass, BrawlerClass };
     }
 }
 
 void ABaseGameMode::PlayerChoseStartingUnit(bool bBrawlerFirst)
 {
+    TSubclassOf<ASoldier> BrawlerClass = ABrawlerSoldier::StaticClass();
+    TSubclassOf<ASoldier> SniperClass = ASniperSoldier::StaticClass();
+
     if (bBrawlerFirst)
     {
-        SpawnQueue = { BP_Brawler_Green, BP_Brawler_Red, BP_Sniper_Green, BP_Sniper_Red };
+        SpawnQueue = { BrawlerClass, BrawlerClass, SniperClass, SniperClass };
     }
     else
     {
-        SpawnQueue = { BP_Sniper_Green, BP_Sniper_Red, BP_Brawler_Green, BP_Brawler_Red };
+        SpawnQueue = { SniperClass, SniperClass, BrawlerClass, BrawlerClass };
     }
 
     CurrentUnitIndex = 0;
@@ -152,24 +155,28 @@ void ABaseGameMode::OnPlacementPhaseComplete()
 
     if (GameUIInstance)
     {
-        FString Message = CurrentTurnTeam == ETeam::Player
-            ? TEXT("🎯 Player turn")
-            : TEXT("🤖 AI turn");
+        FString Message = CurrentTurnTeam == ETeam::Player ? TEXT("🎯 Player turn") : TEXT("🤖 AI turn");
         GameUIInstance->UpdateStatusMessage(FText::FromString(Message));
     }
 }
 
 void ABaseGameMode::HandleTileClicked(ATile* ClickedTile)
 {
+    UE_LOG(LogTemp, Warning, TEXT("🎯 bIsPlayerTurn: %s - CurrentUnitIndex: %d"), bIsPlayerTurn ? TEXT("true") : TEXT("false"), CurrentUnitIndex);
     if (CurrentUnitIndex < SpawnQueue.Num() && bIsPlayerTurn && ClickedTile->IsTileFree())
     {
         FVector SpawnLocation = ClickedTile->GetActorLocation() + FVector(0, 0, 50);
         ASoldier* NewSoldier = GetWorld()->SpawnActor<ASoldier>(SpawnQueue[CurrentUnitIndex], SpawnLocation, FRotator::ZeroRotator);
-
+        if (!SpawnQueue.IsValidIndex(CurrentUnitIndex) || !*SpawnQueue[CurrentUnitIndex])
+        {
+            UE_LOG(LogTemp, Error, TEXT("❌ SpawnQueue[%d] è nullptr o non valido"), CurrentUnitIndex);
+            return;
+        }
         if (NewSoldier)
         {
-            ClickedTile->SetTileOccupied(true);
             NewSoldier->Team = ETeam::Player;
+            UE_LOG(LogTemp, Warning, TEXT("✅ Soldier spawnato correttamente: %s"), *NewSoldier->GetName());
+            ClickedTile->SetTileOccupied(true);
             NewSoldier->TryAssignOwningTile(Tiles);
             CurrentUnitIndex++;
 
@@ -182,7 +189,6 @@ void ABaseGameMode::HandleTileClicked(ATile* ClickedTile)
             {
                 OnPlacementPhaseComplete();
             }
-            return;
         }
     }
 }
@@ -219,37 +225,30 @@ void ABaseGameMode::HandleSoldierSelected(ASoldier* Soldier)
 
 void ABaseGameMode::ResetGame()
 {
-    // 1. Cancella tutti i soldati
     for (TActorIterator<ASoldier> It(GetWorld()); It; ++It)
     {
         It->Destroy();
     }
 
-    // 2. Cancella tutti gli ostacoli
     for (TActorIterator<AObstacles> It(GetWorld()); It; ++It)
     {
         It->Destroy();
     }
 
-    // 3. Pulisce le tile esistenti (reset)
     for (ATile* Tile : Tiles)
     {
         if (Tile)
         {
-            Tile->SetTileOccupied(false);
-            Tile->bHasObstacle = false;
-            Tile->SetSelected(false);
+            Tile->ResetTile();
         }
     }
 
-    // 4. Rigenera nuovi ostacoli
     for (TActorIterator<AGameFeild> It(GetWorld()); It; ++It)
     {
-        It->GenerateObstacles(); // 💡 chiamata alla funzione già esistente
+        It->GenerateObstacles();
         break;
     }
 
-    // 5. Reset variabili interne
     bIsPlayerTurn = true;
     CurrentUnitIndex = 0;
     bActionPhaseStarted = false;
@@ -257,11 +256,10 @@ void ABaseGameMode::ResetGame()
     SelectedSoldier_Current = nullptr;
     SpawnQueue.Empty();
 
-    // 6. Mostra messaggio di benvenuto e resetta UI
     if (GameUIInstance)
     {
-        GameUIInstance->ShowWelcomeMessage(); // mostra messaggio
-        GameUIInstance->SetSpawnQueue(SpawnQueue); // svuota coda
+        GameUIInstance->ShowWelcomeMessage();
+        GameUIInstance->SetSpawnQueue(SpawnQueue);
     }
 
     UE_LOG(LogTemp, Warning, TEXT("♻️ Reset completato!"));

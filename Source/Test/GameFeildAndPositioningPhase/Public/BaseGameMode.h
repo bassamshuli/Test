@@ -35,6 +35,9 @@ public:
     UFUNCTION()
     void OnPlacementPhaseComplete();
 
+    UFUNCTION(BlueprintCallable)
+    void ResetGame();
+
     void SetupAISpawnQueue();
 
     UPROPERTY(BlueprintReadOnly)
@@ -45,18 +48,6 @@ public:
 
     UPROPERTY()
     TArray<TSubclassOf<class ASoldier>> SpawnQueue;
-
-    UPROPERTY(EditAnywhere, Category = "Setup")
-    TSubclassOf<ASoldier> BP_Brawler_Green;
-
-    UPROPERTY(EditAnywhere, Category = "Setup")
-    TSubclassOf<ASoldier> BP_Brawler_Red;
-
-    UPROPERTY(EditAnywhere, Category = "Setup")
-    TSubclassOf<ASoldier> BP_Sniper_Green;
-
-    UPROPERTY(EditAnywhere, Category = "Setup")
-    TSubclassOf<ASoldier> BP_Sniper_Red;
 
     UPROPERTY()
     class UWBP_Game* GameUIInstance;
@@ -73,7 +64,4 @@ public:
     bool bActionPhaseStarted = false;
     ETeam CurrentTurnTeam;
     ETeam StartingTeam;
-
-    UFUNCTION(BlueprintCallable)
-    void ResetGame();
 };

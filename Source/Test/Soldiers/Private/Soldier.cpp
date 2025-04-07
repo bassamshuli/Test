@@ -3,35 +3,40 @@
 #include "Soldier.h"
 #include "Tile.h"
 #include "BaseGameMode.h"
+#include "Kismet/GameplayStatics.h"
+#include "EngineUtils.h"
 #include "Containers/Queue.h"
 #include "Containers/Set.h"
-#include "EngineUtils.h"
-#include "Kismet/GameplayStatics.h"
 
 ASoldier::ASoldier()
 {
-    PrimaryActorTick.bCanEverTick = true;
+    PrimaryActorTick.bCanEverTick = false;
 
-    SpriteComponent = CreateDefaultSubobject<UPaperSpriteComponent>(TEXT("SpriteComponent"));
-    RootComponent = SpriteComponent;
+    CapsuleComponent = CreateDefaultSubobject<UCapsuleComponent>(TEXT("Capsule"));
+    CapsuleComponent->InitCapsuleSize(34.f, 88.f);
+    CapsuleComponent->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+    CapsuleComponent->SetCollisionProfileName(TEXT("Pawn"));
+    RootComponent = CapsuleComponent;
 
-    SpriteComponent->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
-    SpriteComponent->SetCollisionProfileName(TEXT("BlockAll"));
-    SpriteComponent->SetGenerateOverlapEvents(true);
-    SpriteComponent->SetNotifyRigidBodyCollision(true);
+    SpriteComponent = CreateDefaultSubobject<UPaperSpriteComponent>(TEXT("Sprite"));
+    SpriteComponent->SetupAttachment(RootComponent);
+    SpriteComponent->SetRelativeRotation(FRotator(0.f, 0.f, -90.f));
 }
 
 void ASoldier::BeginPlay()
 {
     Super::BeginPlay();
 
-    if (APlayerController* PC = UGameplayStatics::GetPlayerController(GetWorld(), 0))
+    if (Team == ETeam::Player)
     {
-        EnableInput(PC);
-        UE_LOG(LogTemp, Warning, TEXT("🟢 Input abilitato su %s"), *GetName());
-    }
+        if (APlayerController* PC = UGameplayStatics::GetPlayerController(GetWorld(), 0))
+        {
+            EnableInput(PC);
+            UE_LOG(LogTemp, Warning, TEXT("🟢 Input abilitato su %s"), *GetName());
+        }
 
-    OnClicked.AddDynamic(this, &ASoldier::OnSoldierClicked);
+        OnClicked.AddDynamic(this, &ASoldier::OnSoldierClicked);
+    }
 }
 
 void ASoldier::Tick(float DeltaTime)
@@ -99,8 +104,8 @@ void ASoldier::ShowMovableTiles(const TArray<ATile*>& AllTiles)
         if (Tile)
         {
             TileMap.Add(Tile->GridPosition, Tile);
-            Tile->SetSelected(false);             // reset blu
-            Tile->SetEnemyHighlighted(false);     // reset rosso
+            Tile->SetSelected(false);
+            Tile->SetEnemyHighlighted(false);
         }
     }
 
@@ -147,13 +152,12 @@ void ASoldier::ShowMovableTiles(const TArray<ATile*>& AllTiles)
         }
     }
 
-    // 🔺 Evidenzia le tile nemiche adiacenti all'OwningTile
+    // Evidenzia nemici
     for (ATile* Tile : AllTiles)
     {
         if (!Tile || !Tile->bIsOccupied || Tile->bHasObstacle)
             continue;
 
-        // Solo se il tile è adiacente (in griglia)
         int32 GridDistance = FMath::Abs(Tile->GridPosition.X - Start.X) + FMath::Abs(Tile->GridPosition.Y - Start.Y);
         if (GridDistance <= AttackRange)
         {

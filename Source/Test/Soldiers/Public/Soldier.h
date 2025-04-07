@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Pawn.h"
 #include "PaperSpriteComponent.h"
+#include "Components/CapsuleComponent.h"
 #include "Soldier.generated.h"
 
 class ATile;
@@ -35,14 +36,28 @@ public:
     virtual void Tick(float DeltaTime) override;
 
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+    UCapsuleComponent* CapsuleComponent;
+
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
     UPaperSpriteComponent* SpriteComponent;
 
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stats") int32 MaxMovement;
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stats") EAttackType AttackType;
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stats") int32 AttackRange;
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stats") int32 MinDamage;
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stats") int32 MaxDamage;
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stats") int32 Health;
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stats")
+    int32 MaxMovement;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stats")
+    EAttackType AttackType;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stats")
+    int32 AttackRange;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stats")
+    int32 MinDamage;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stats")
+    int32 MaxDamage;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stats")
+    int32 Health;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
     ETeam Team;
@@ -60,5 +75,5 @@ public:
     void ShowMovableTiles(const TArray<ATile*>& AllTiles);
 
     UFUNCTION()
-    void TryAssignOwningTile(const TArray<ATile*>& AllTiles); // ✅ Nuovo metodo
+    void TryAssignOwningTile(const TArray<ATile*>& AllTiles);
 };

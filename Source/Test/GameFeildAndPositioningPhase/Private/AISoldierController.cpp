@@ -57,16 +57,23 @@ void AAISoldierController::PlaceAIUnit()
     {
         ATile* SelectedTile = FreeTiles[FMath::RandRange(0, FreeTiles.Num() - 1)];
         FVector SpawnLocation = SelectedTile->GetActorLocation() + FVector(0, 0, 50);
-        ASoldier* AIUnit = GetWorld()->SpawnActor<ASoldier>((*CachedSpawnQueue)[CachedGameMode->CurrentUnitIndex], SpawnLocation, FRotator::ZeroRotator);
+        TSubclassOf<ASoldier> SoldierClass = (*CachedSpawnQueue)[CachedGameMode->CurrentUnitIndex];
+
+        if (!SoldierClass) return;
+
+        ASoldier* AIUnit = GetWorld()->SpawnActor<ASoldier>(SoldierClass, SpawnLocation, FRotator::ZeroRotator);
 
         if (AIUnit)
         {
-            SelectedTile->SetTileOccupied(true);
             AIUnit->Team = ETeam::AI;
+
+            SelectedTile->SetTileOccupied(true);
             AIUnit->TryAssignOwningTile(CachedTiles);
 
+            UE_LOG(LogTemp, Warning, TEXT("🤖 AI ha piazzato un %s in posizione %s"),
+                *AIUnit->GetName(), *SelectedTile->GetActorLocation().ToString());
+
             CachedGameMode->CurrentUnitIndex++;
-            CachedGameMode->bIsPlayerTurn = true;
 
             if (CachedGameUI)
             {
@@ -79,8 +86,13 @@ void AAISoldierController::PlaceAIUnit()
             }
             else
             {
+                CachedGameMode->bIsPlayerTurn = true;
                 CachedGameMode->NextTurn();
             }
+        }
+        else
+        {
+            UE_LOG(LogTemp, Error, TEXT("❌ AI: Spawn fallito per unità %d"), CachedGameMode->CurrentUnitIndex);
         }
     }
 }

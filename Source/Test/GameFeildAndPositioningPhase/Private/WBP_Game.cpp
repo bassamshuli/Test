@@ -4,6 +4,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "BaseGameMode.h"
 #include "GameFeild.h"
+#include "Soldier.h"
 
 bool UWBP_Game::Initialize()
 {
@@ -13,13 +14,13 @@ bool UWBP_Game::Initialize()
     if (StartButton)
     {
         StartButton->OnClicked.AddUniqueDynamic(this, &UWBP_Game::StartGameButtonClicked);
-        StartButton->SetVisibility(ESlateVisibility::Visible); // Mostra Start
+        StartButton->SetVisibility(ESlateVisibility::Visible);
     }
 
     if (ResetButton)
     {
         ResetButton->OnClicked.AddUniqueDynamic(this, &UWBP_Game::ResetGameButtonClicked);
-        ResetButton->SetVisibility(ESlateVisibility::Collapsed); // Nascondi Reset
+        ResetButton->SetVisibility(ESlateVisibility::Collapsed);
     }
 
     if (ButtonChooseBrawler)
@@ -44,7 +45,6 @@ void UWBP_Game::StartGameButtonClicked()
         GameModeRef->StartGame();
     }
 
-    // 🔁 Cambio visibilità pulsanti
     if (StartButton)
         StartButton->SetVisibility(ESlateVisibility::Collapsed);
 
@@ -56,10 +56,9 @@ void UWBP_Game::ResetGameButtonClicked()
 {
     if (GameModeRef)
     {
-        GameModeRef->ResetGame(); // ⚠️ assicurati che questa funzione esista
+        GameModeRef->ResetGame();
     }
 
-    // Torna allo stato iniziale
     if (StartButton)
         StartButton->SetVisibility(ESlateVisibility::Visible);
 
@@ -74,15 +73,18 @@ void UWBP_Game::ShowWelcomeMessage()
 
 void UWBP_Game::ShowPlacementMessage(bool bIsPlayerTurn, int32 CurrentUnitIndex)
 {
-    FString Message;
+    FString Message = "Unità";
 
-    FString UnitName = SpawnQueue.IsValidIndex(CurrentUnitIndex) ? SpawnQueue[CurrentUnitIndex]->GetName() : TEXT("Unità");
-    bool bIsBrawler = UnitName.Contains("Brawler");
+    if (SpawnQueue.IsValidIndex(CurrentUnitIndex))
+    {
+        UClass* SoldierClass = SpawnQueue[CurrentUnitIndex];
+        ASoldier* DefaultSoldier = SoldierClass->GetDefaultObject<ASoldier>();
+        bool bIsBrawler = (DefaultSoldier->AttackType == EAttackType::Melee);
 
-    if (bIsPlayerTurn)
-        Message = FString::Printf(TEXT("🎯 Player turn - Posiziona il tuo %s"), bIsBrawler ? TEXT("BRAWLER") : TEXT("SNIPER"));
-    else
-        Message = FString::Printf(TEXT("🤖 AI turn - Posiziona il suo %s"), bIsBrawler ? TEXT("BRAWLER") : TEXT("SNIPER"));
+        Message = bIsPlayerTurn
+            ? FString::Printf(TEXT("🎯 Player turn - Posiziona il tuo %s"), bIsBrawler ? TEXT("BRAWLER") : TEXT("SNIPER"))
+            : FString::Printf(TEXT("🤖 AI turn - Posiziona il suo %s"), bIsBrawler ? TEXT("BRAWLER") : TEXT("SNIPER"));
+    }
 
     UpdateStatusMessage(FText::FromString(Message));
 }

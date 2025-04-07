@@ -7,6 +7,7 @@
 #include "Tile.generated.h"
 
 class ASoldier;
+class UStaticMeshComponent;
 
 UCLASS()
 class TEST_API ATile : public AActor
@@ -15,29 +16,29 @@ class TEST_API ATile : public AActor
 
 public:
     ATile();
-
     virtual void BeginPlay() override;
 
     UFUNCTION(BlueprintCallable) bool IsTileFree() const;
     UFUNCTION(BlueprintCallable) void SetTileOccupied(bool bOccupied);
     UFUNCTION() void OnTileClicked(AActor* TouchedActor, FKey ButtonPressed);
     UFUNCTION() void SetSelected(bool bSelected);
-
+    UFUNCTION() void SetEnemyHighlighted(bool bHighlight);
+    UFUNCTION() void ResetTile();
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Grid")
     FIntPoint GridPosition;
 
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Grid")
-    bool bIsOccupied;
+    bool bIsOccupied = false;
+
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+    bool bHasObstacle = false;
 
     UPROPERTY(EditAnywhere, Category = "Spawn")
     TSubclassOf<ASoldier> PlayerSoldierToSpawn;
 
     UPROPERTY(EditDefaultsOnly, Category = "Spawning")
     TSubclassOf<ASoldier> SoldierClass;
-
-    UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-    bool bHasObstacle = false;
 
     UPROPERTY(EditAnywhere)
     UMaterialInterface* DefaultMaterial;
@@ -48,6 +49,6 @@ public:
     UPROPERTY(EditDefaultsOnly)
     UMaterialInterface* EnemyMaterial;
 
-    UFUNCTION()
-    void SetEnemyHighlighted(bool bHighlight);
+    UPROPERTY(VisibleAnywhere)
+    UStaticMeshComponent* TileMesh;
 };
