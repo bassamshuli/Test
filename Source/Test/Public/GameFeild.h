@@ -35,8 +35,11 @@ public:
     UPROPERTY(EditAnywhere, Category = "Grid") TSubclassOf<AActor> TileBlueprint;
 
     // === OBSTACLES ===
-    UPROPERTY(EditAnywhere, Category = "Obstacles") TSubclassOf<AObstacles> MountainBlueprint;
-    UPROPERTY(EditAnywhere, Category = "Obstacles") TSubclassOf<AObstacles> TreeBlueprint;
+    UPROPERTY()
+    TSubclassOf<AObstacles> MountainBlueprint;
+
+    UPROPERTY()
+    TSubclassOf<AObstacles> TreeBlueprint;
     UPROPERTY(EditAnywhere, Category = "Spawn") TSubclassOf<AObstacles> ObstacleToSpawn;
 
     // === UI ===

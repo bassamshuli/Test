@@ -13,5 +13,8 @@ UCLASS()
 class TEST_API AMountain : public AObstacles
 {
 	GENERATED_BODY()
+
+public:
+	AMountain();
 	
 };

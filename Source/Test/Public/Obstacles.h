@@ -4,6 +4,8 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
+#include "PaperSpriteComponent.h"
+#include "PaperSprite.h"
 #include "Obstacles.generated.h"
 
 UCLASS()
@@ -13,5 +15,13 @@ class TEST_API AObstacles : public AActor
 
 public:
     AObstacles();
+
+protected:
     virtual void BeginPlay() override;
+
+public:
+    UPROPERTY(VisibleAnywhere)
+    UPaperSpriteComponent* SpriteComponent;
+
+    void InitWithSprite(const FString& SpritePath);
 };

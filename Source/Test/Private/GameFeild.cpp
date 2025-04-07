@@ -7,6 +7,8 @@
 #include "Kismet/GameplayStatics.h"
 #include "Blueprint/UserWidget.h"
 #include "TimerManager.h"
+#include "Mountain.h"
+#include "Tree.h"
 #include "EngineUtils.h"
 
 AGameFeild::AGameFeild()
@@ -16,15 +18,12 @@ AGameFeild::AGameFeild()
     static ConstructorHelpers::FClassFinder<AActor> TileBP(TEXT("/Game/Blueprints/BP_FeildAndMode/BP_Tile"));
     if (TileBP.Succeeded()) TileBlueprint = TileBP.Class;
 
-    static ConstructorHelpers::FClassFinder<AObstacles> MountainBP(TEXT("/Game/Blueprints/BP_Obstacles/BP_Mountain"));
-    if (MountainBP.Succeeded()) MountainBlueprint = MountainBP.Class;
-
-    static ConstructorHelpers::FClassFinder<AObstacles> TreeBP(TEXT("/Game/Blueprints/BP_Obstacles/BP_Tree"));
-    if (TreeBP.Succeeded()) TreeBlueprint = TreeBP.Class;
-
     static ConstructorHelpers::FClassFinder<UUserWidget> WidgetClassFinder(TEXT("/Game/Blueprints/BP_Widgets/WBP_Game"));
     if (WidgetClassFinder.Succeeded()) GameWidgetClass = WidgetClassFinder.Class;
 
+    // Usa le classi C++ direttamente
+    MountainBlueprint = AMountain::StaticClass();
+    TreeBlueprint = ATree::StaticClass();
     ObstacleToSpawn = TreeBlueprint;
 }
 
@@ -99,10 +98,21 @@ void AGameFeild::GenerateObstacles()
         {
             UsedIndices.Add(Index);
             FVector Location = Tiles[Index]->GetActorLocation() + FVector(0, 0, 10);
-            TSubclassOf<AObstacles> Obstacle = FMath::RandBool() ? MountainBlueprint : TreeBlueprint;
-            World->SpawnActor<AObstacles>(Obstacle, Location, FRotator::ZeroRotator);
-            Tiles[Index]->bHasObstacle = true;
-            Tiles[Index]->SetTileOccupied(true);
+
+            bool bIsMountain = FMath::RandBool();
+            TSubclassOf<AObstacles> Obstacle = bIsMountain ? MountainBlueprint : TreeBlueprint;
+            AObstacles* SpawnedObstacle = World->SpawnActor<AObstacles>(Obstacle, Location, FRotator::ZeroRotator);
+
+            if (SpawnedObstacle)
+            {
+                UE_LOG(LogTemp, Warning, TEXT("✅ Ostacolo spawnato: %s"), *SpawnedObstacle->GetName());
+                Tiles[Index]->bHasObstacle = true;
+                Tiles[Index]->SetTileOccupied(true);
+            }
+            else
+            {
+                UE_LOG(LogTemp, Error, TEXT("❌ Fallito lo spawn di un ostacolo!"));
+            }
         }
     }
 }
