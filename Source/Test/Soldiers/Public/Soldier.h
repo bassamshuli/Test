@@ -3,12 +3,11 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "GameFramework/Pawn.h"
-#include "PaperSpriteComponent.h"
-#include "Components/CapsuleComponent.h"
+#include "GameFramework/Actor.h"
 #include "Soldier.generated.h"
 
 class ATile;
+class UPaperSpriteComponent;
 
 UENUM(BlueprintType)
 enum class EAttackType : uint8
@@ -25,55 +24,46 @@ enum class ETeam : uint8
 };
 
 UCLASS()
-class TEST_API ASoldier : public APawn
+class TEST_API ASoldier : public AActor
 {
     GENERATED_BODY()
 
 public:
     ASoldier();
-
-    virtual void BeginPlay() override;
     virtual void Tick(float DeltaTime) override;
 
-    UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-    UCapsuleComponent* CapsuleComponent;
+    virtual int32 GetRandomDamage() const;
 
-    UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-    UPaperSpriteComponent* SpriteComponent;
-
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stats")
-    int32 MaxMovement;
-
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stats")
-    EAttackType AttackType;
-
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stats")
-    int32 AttackRange;
-
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stats")
-    int32 MinDamage;
-
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stats")
-    int32 MaxDamage;
-
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stats")
-    int32 Health;
-
-    UPROPERTY(EditAnywhere, BlueprintReadWrite)
-    ETeam Team;
-
-    UPROPERTY()
-    ATile* OwningTile;
-
-    UFUNCTION(BlueprintCallable, Category = "Combat")
-    int32 GetRandomDamage() const;
+    void TryAssignOwningTile(const TArray<ATile*>& AllTiles);
+    void ShowMovableTiles(const TArray<ATile*>& AllTiles);
 
     UFUNCTION()
     void OnSoldierClicked(AActor* TouchedActor, FKey ButtonPressed);
 
-    UFUNCTION()
-    void ShowMovableTiles(const TArray<ATile*>& AllTiles);
+    UPROPERTY(EditAnywhere, BlueprintReadWrite)
+    int32 MaxMovement;
 
-    UFUNCTION()
-    void TryAssignOwningTile(const TArray<ATile*>& AllTiles);
+    UPROPERTY(EditAnywhere, BlueprintReadWrite)
+    int32 AttackRange;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite)
+    int32 MinDamage;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite)
+    int32 MaxDamage;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite)
+    int32 Health;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite)
+    EAttackType AttackType;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite)
+    ETeam Team;
+
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+    class UPaperSpriteComponent* SpriteComponent;
+
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+    class ATile* OwningTile;
 };

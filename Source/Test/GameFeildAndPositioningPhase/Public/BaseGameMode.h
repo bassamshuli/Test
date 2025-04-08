@@ -40,14 +40,23 @@ public:
 
     void SetupAISpawnQueue();
 
+    void SpawnPlayerSoldier(TSubclassOf<ASoldier> SoldierClass, const FVector& Location, ATile* Tile);
+    void SpawnAISoldier(TSubclassOf<ASoldier> SoldierClass, const FVector& Location, ATile* Tile);
+
     UPROPERTY(BlueprintReadOnly)
-    int32 CurrentUnitIndex = 0;
+    int32 PlayerUnitIndex = 0;
+
+    UPROPERTY(BlueprintReadOnly)
+    int32 AIUnitIndex = 0;
 
     UPROPERTY(BlueprintReadOnly)
     bool bIsPlayerTurn = true;
 
     UPROPERTY()
-    TArray<TSubclassOf<class ASoldier>> SpawnQueue;
+    TArray<TSubclassOf<class ASoldier>> PlayerSpawnQueue;
+
+    UPROPERTY()
+    TArray<TSubclassOf<class ASoldier>> AISpawnQueue;
 
     UPROPERTY()
     class UWBP_Game* GameUIInstance;
@@ -64,4 +73,5 @@ public:
     bool bActionPhaseStarted = false;
     ETeam CurrentTurnTeam;
     ETeam StartingTeam;
+    void PlaceAIUnit();
 };

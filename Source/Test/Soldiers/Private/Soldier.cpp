@@ -10,33 +10,10 @@
 
 ASoldier::ASoldier()
 {
-    PrimaryActorTick.bCanEverTick = false;
+    PrimaryActorTick.bCanEverTick = true;
 
-    CapsuleComponent = CreateDefaultSubobject<UCapsuleComponent>(TEXT("Capsule"));
-    CapsuleComponent->InitCapsuleSize(34.f, 88.f);
-    CapsuleComponent->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
-    CapsuleComponent->SetCollisionProfileName(TEXT("Pawn"));
-    RootComponent = CapsuleComponent;
-
-    SpriteComponent = CreateDefaultSubobject<UPaperSpriteComponent>(TEXT("Sprite"));
-    SpriteComponent->SetupAttachment(RootComponent);
-    SpriteComponent->SetRelativeRotation(FRotator(0.f, 0.f, -90.f));
-}
-
-void ASoldier::BeginPlay()
-{
-    Super::BeginPlay();
-
-    if (Team == ETeam::Player)
-    {
-        if (APlayerController* PC = UGameplayStatics::GetPlayerController(GetWorld(), 0))
-        {
-            EnableInput(PC);
-            UE_LOG(LogTemp, Warning, TEXT("🟢 Input abilitato su %s"), *GetName());
-        }
-
-        OnClicked.AddDynamic(this, &ASoldier::OnSoldierClicked);
-    }
+    SpriteComponent = nullptr; // Ogni figlio lo crea da solo
+    OwningTile = nullptr;
 }
 
 void ASoldier::Tick(float DeltaTime)

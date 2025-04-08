@@ -7,21 +7,19 @@
 
 ABrawlerSoldier::ABrawlerSoldier()
 {
-    static ConstructorHelpers::FObjectFinder<UPaperSprite> DefaultSprite(TEXT("/Game/Sprites/Soldier1_Green_Sprite.Soldier1_Green_Sprite"));
-    if (DefaultSprite.Succeeded())
-    {
-        SpriteComponent->SetSprite(DefaultSprite.Object);
-    }
+    SpriteComponent = CreateDefaultSubobject<UPaperSpriteComponent>(TEXT("BrawlerSprite"));
+    RootComponent = SpriteComponent;
 
-    SpriteComponent->SetRelativeScale3D(FVector(0.4f, 0.4f, 0.4f));
+    SpriteComponent->SetRelativeRotation(FRotator(0.f, 0.f, -90.f));
+    SpriteComponent->SetRelativeScale3D(FVector(0.5f, 0.5f, 0.5f));
 
+    // Stats specifici
     MaxMovement = 6;
     AttackType = EAttackType::Melee;
     AttackRange = 1;
     MinDamage = 1;
     MaxDamage = 6;
     Health = 40;
-    
 }
 
 void ABrawlerSoldier::BeginPlay()
@@ -44,5 +42,4 @@ void ABrawlerSoldier::BeginPlay()
             SpriteComponent->SetSprite(SpriteAsset);
         }
     }
-    
 }

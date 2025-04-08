@@ -13,5 +13,7 @@ class TEST_API ABrawlerSoldier : public ASoldier
 
 public:
     ABrawlerSoldier();
+
+protected:
     virtual void BeginPlay() override;
 };

@@ -73,18 +73,20 @@ void UWBP_Game::ShowWelcomeMessage()
 
 void UWBP_Game::ShowPlacementMessage(bool bIsPlayerTurn, int32 CurrentUnitIndex)
 {
-    FString Message = "Unità";
-
-    if (SpawnQueue.IsValidIndex(CurrentUnitIndex))
+    if (!SpawnQueue.IsValidIndex(CurrentUnitIndex))
     {
-        UClass* SoldierClass = SpawnQueue[CurrentUnitIndex];
-        ASoldier* DefaultSoldier = SoldierClass->GetDefaultObject<ASoldier>();
-        bool bIsBrawler = (DefaultSoldier->AttackType == EAttackType::Melee);
-
-        Message = bIsPlayerTurn
-            ? FString::Printf(TEXT("🎯 Player turn - Posiziona il tuo %s"), bIsBrawler ? TEXT("BRAWLER") : TEXT("SNIPER"))
-            : FString::Printf(TEXT("🤖 AI turn - Posiziona il suo %s"), bIsBrawler ? TEXT("BRAWLER") : TEXT("SNIPER"));
+        UE_LOG(LogTemp, Error, TEXT("❌ SpawnQueue index %d is invalid (size: %d)"), CurrentUnitIndex, SpawnQueue.Num());
+        UpdateStatusMessage(FText::FromString(TEXT("⚠️ Errore: Nessuna unità disponibile")));
+        return;
     }
+
+    UClass* SoldierClass = SpawnQueue[CurrentUnitIndex];
+    ASoldier* DefaultSoldier = SoldierClass->GetDefaultObject<ASoldier>();
+    bool bIsBrawler = (DefaultSoldier->AttackType == EAttackType::Melee);
+
+    FString Message = bIsPlayerTurn
+        ? FString::Printf(TEXT("🎯 Player turn - Posiziona il tuo %s"), bIsBrawler ? TEXT("BRAWLER") : TEXT("SNIPER"))
+        : FString::Printf(TEXT("🤖 AI turn - Posiziona il suo %s"), bIsBrawler ? TEXT("BRAWLER") : TEXT("SNIPER"));
 
     UpdateStatusMessage(FText::FromString(Message));
 }

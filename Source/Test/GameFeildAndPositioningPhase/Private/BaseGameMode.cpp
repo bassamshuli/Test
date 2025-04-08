@@ -4,25 +4,22 @@
 #include "Camera/CameraActor.h"
 #include "GameFeild.h"
 #include "WBP_Game.h"
-#include "AISoldierController.h"
 #include "Kismet/GameplayStatics.h"
 #include "EngineUtils.h"
 #include "SniperSoldier.h"
 #include "BrawlerSoldier.h"
+#include "PaperSprite.h"
+#include "PaperSpriteComponent.h"
 
 ABaseGameMode::ABaseGameMode()
 {
-    SpawnQueue.Empty();
+    PlayerSpawnQueue.Empty();
+    AISpawnQueue.Empty();
 }
 
 void ABaseGameMode::BeginPlay()
 {
     Super::BeginPlay();
-
-    if (!TActorIterator<AAISoldierController>(GetWorld()))
-    {
-        GetWorld()->SpawnActor<AAISoldierController>(AAISoldierController::StaticClass(), FVector::ZeroVector, FRotator::ZeroRotator);
-    }
 
     for (TActorIterator<AGameFeild> It(GetWorld()); It; ++It)
     {
@@ -47,7 +44,8 @@ void ABaseGameMode::BeginPlay()
 
 void ABaseGameMode::StartGame()
 {
-    CurrentUnitIndex = 0;
+    PlayerUnitIndex = 0;
+    AIUnitIndex = 0;
     bIsPlayerTurn = FMath::RandBool();
     StartingTeam = bIsPlayerTurn ? ETeam::Player : ETeam::AI;
 
@@ -63,8 +61,8 @@ void ABaseGameMode::StartGame()
         SetupAISpawnQueue();
         if (GameUIInstance)
         {
-            GameUIInstance->SetSpawnQueue(SpawnQueue);
-            GameUIInstance->ShowPlacementMessage(false, CurrentUnitIndex);
+            GameUIInstance->SetSpawnQueue(AISpawnQueue);
+            GameUIInstance->ShowPlacementMessage(false, AIUnitIndex);
         }
         GetWorldTimerManager().SetTimerForNextTick(this, &ABaseGameMode::NextTurn);
     }
@@ -78,11 +76,11 @@ void ABaseGameMode::SetupAISpawnQueue()
 
     if (bBrawlerFirst)
     {
-        SpawnQueue = { BrawlerClass, BrawlerClass, SniperClass, SniperClass };
+        AISpawnQueue = { BrawlerClass, SniperClass };
     }
     else
     {
-        SpawnQueue = { SniperClass, SniperClass, BrawlerClass, BrawlerClass };
+        AISpawnQueue = { SniperClass, BrawlerClass };
     }
 }
 
@@ -93,103 +91,108 @@ void ABaseGameMode::PlayerChoseStartingUnit(bool bBrawlerFirst)
 
     if (bBrawlerFirst)
     {
-        SpawnQueue = { BrawlerClass, BrawlerClass, SniperClass, SniperClass };
+        PlayerSpawnQueue = { BrawlerClass, SniperClass };
+        AISpawnQueue = { SniperClass, BrawlerClass };
     }
     else
     {
-        SpawnQueue = { SniperClass, SniperClass, BrawlerClass, BrawlerClass };
+        PlayerSpawnQueue = { SniperClass, BrawlerClass };
+        AISpawnQueue = { BrawlerClass, SniperClass };
     }
 
-    CurrentUnitIndex = 0;
+    PlayerUnitIndex = 0;
+    AIUnitIndex = 0;
 
     if (GameUIInstance)
     {
-        GameUIInstance->SetSpawnQueue(SpawnQueue);
-        GameUIInstance->ShowPlacementMessage(true, CurrentUnitIndex);
+        // ✅ ADESSO è popolato correttamente
+        GameUIInstance->SetSpawnQueue(PlayerSpawnQueue);
+        GameUIInstance->ShowPlacementMessage(true, PlayerUnitIndex);
     }
 
     NextTurn();
 }
-
 void ABaseGameMode::NextTurn()
 {
-    if (CurrentUnitIndex >= SpawnQueue.Num())
+    UE_LOG(LogTemp, Warning, TEXT("🔄 NextTurn - PlayerIndex: %d / %d, AIIndex: %d / %d, Turno: %s"),
+        PlayerUnitIndex, PlayerSpawnQueue.Num(),
+        AIUnitIndex, AISpawnQueue.Num(),
+        bIsPlayerTurn ? TEXT("PLAYER") : TEXT("AI"));
+
+    if (PlayerUnitIndex >= PlayerSpawnQueue.Num() && AIUnitIndex >= AISpawnQueue.Num())
     {
         OnPlacementPhaseComplete();
         return;
     }
 
-    if (bIsPlayerTurn)
+    if (bIsPlayerTurn && PlayerUnitIndex < PlayerSpawnQueue.Num())
     {
-        for (ATile* Tile : Tiles)
+        if (GameUIInstance)
         {
-            if (Tile)
-            {
-                Tile->PlayerSoldierToSpawn = SpawnQueue[CurrentUnitIndex];
-            }
+            GameUIInstance->SetSpawnQueue(PlayerSpawnQueue);
+            GameUIInstance->ShowPlacementMessage(true, PlayerUnitIndex);
         }
     }
-
-    if (GameUIInstance)
+    else if (!bIsPlayerTurn && AIUnitIndex < AISpawnQueue.Num())
     {
-        GameUIInstance->SetSpawnQueue(SpawnQueue);
-        GameUIInstance->ShowPlacementMessage(bIsPlayerTurn, CurrentUnitIndex);
-    }
+        if (GameUIInstance)
+        {
+            GameUIInstance->SetSpawnQueue(AISpawnQueue);
+            GameUIInstance->ShowPlacementMessage(false, AIUnitIndex);
+        }
 
-    if (!bIsPlayerTurn)
-    {
         GetWorldTimerManager().SetTimerForNextTick([this]() {
-            for (TActorIterator<AAISoldierController> It(GetWorld()); It; ++It)
-            {
-                It->PlaceAIUnitDelayed(Tiles, SpawnQueue, GameUIInstance, this);
-                break;
-            }
+            PlaceAIUnit();
             });
-    }
-}
-
-void ABaseGameMode::OnPlacementPhaseComplete()
-{
-    bActionPhaseStarted = true;
-    CurrentTurnTeam = StartingTeam;
-
-    if (GameUIInstance)
-    {
-        FString Message = CurrentTurnTeam == ETeam::Player ? TEXT("🎯 Player turn") : TEXT("🤖 AI turn");
-        GameUIInstance->UpdateStatusMessage(FText::FromString(Message));
     }
 }
 
 void ABaseGameMode::HandleTileClicked(ATile* ClickedTile)
 {
-    UE_LOG(LogTemp, Warning, TEXT("🎯 bIsPlayerTurn: %s - CurrentUnitIndex: %d"), bIsPlayerTurn ? TEXT("true") : TEXT("false"), CurrentUnitIndex);
-    if (CurrentUnitIndex < SpawnQueue.Num() && bIsPlayerTurn && ClickedTile->IsTileFree())
+    if (bIsPlayerTurn && PlayerUnitIndex < PlayerSpawnQueue.Num() && ClickedTile->IsTileFree())
     {
         FVector SpawnLocation = ClickedTile->GetActorLocation() + FVector(0, 0, 50);
-        ASoldier* NewSoldier = GetWorld()->SpawnActor<ASoldier>(SpawnQueue[CurrentUnitIndex], SpawnLocation, FRotator::ZeroRotator);
-        if (!SpawnQueue.IsValidIndex(CurrentUnitIndex) || !*SpawnQueue[CurrentUnitIndex])
-        {
-            UE_LOG(LogTemp, Error, TEXT("❌ SpawnQueue[%d] è nullptr o non valido"), CurrentUnitIndex);
-            return;
-        }
-        if (NewSoldier)
-        {
-            NewSoldier->Team = ETeam::Player;
-            UE_LOG(LogTemp, Warning, TEXT("✅ Soldier spawnato correttamente: %s"), *NewSoldier->GetName());
-            ClickedTile->SetTileOccupied(true);
-            NewSoldier->TryAssignOwningTile(Tiles);
-            CurrentUnitIndex++;
+        SpawnPlayerSoldier(PlayerSpawnQueue[PlayerUnitIndex], SpawnLocation, ClickedTile);
+        PlayerUnitIndex++;
 
-            if (CurrentUnitIndex < SpawnQueue.Num())
-            {
-                bIsPlayerTurn = false;
-                NextTurn();
-            }
-            else
-            {
-                OnPlacementPhaseComplete();
-            }
+        if (PlayerUnitIndex >= PlayerSpawnQueue.Num() && AIUnitIndex >= AISpawnQueue.Num())
+        {
+            OnPlacementPhaseComplete();
         }
+        else
+        {
+            bIsPlayerTurn = false;
+            NextTurn();
+        }
+    }
+}
+
+void ABaseGameMode::SpawnPlayerSoldier(TSubclassOf<ASoldier> SoldierClass, const FVector& Location, ATile* Tile)
+{
+    ASoldier* NewSoldier = GetWorld()->SpawnActor<ASoldier>(SoldierClass, Location, FRotator::ZeroRotator);
+    if (NewSoldier)
+    {
+        NewSoldier->Team = ETeam::Player;
+        Tile->SetTileOccupied(true);
+        NewSoldier->TryAssignOwningTile(Tiles);
+
+        FString Path;
+        if (SoldierClass->IsChildOf(ABrawlerSoldier::StaticClass()))
+        {
+            Path = "/Game/Sprites/Soldier1_Green_Sprite.Soldier1_Green_Sprite";
+        }
+        else
+        {
+            Path = "/Game/Sprites/Soldier2_Green_Sprite.Soldier2_Green_Sprite";
+        }
+
+        UPaperSprite* SpriteAsset = LoadObject<UPaperSprite>(nullptr, *Path);
+        if (SpriteAsset)
+        {
+            NewSoldier->SpriteComponent->SetSprite(SpriteAsset);
+        }
+
+        UE_LOG(LogTemp, Warning, TEXT("🧍 Player ha piazzato un %s (Team: Player)"), *NewSoldier->GetName());
     }
 }
 
@@ -223,6 +226,18 @@ void ABaseGameMode::HandleSoldierSelected(ASoldier* Soldier)
     }
 }
 
+void ABaseGameMode::OnPlacementPhaseComplete()
+{
+    bActionPhaseStarted = true;
+    CurrentTurnTeam = StartingTeam;
+
+    if (GameUIInstance)
+    {
+        FString Message = CurrentTurnTeam == ETeam::Player ? TEXT("🎯 Player turn") : TEXT("🤖 AI turn");
+        GameUIInstance->UpdateStatusMessage(FText::FromString(Message));
+    }
+}
+
 void ABaseGameMode::ResetGame()
 {
     for (TActorIterator<ASoldier> It(GetWorld()); It; ++It)
@@ -250,17 +265,87 @@ void ABaseGameMode::ResetGame()
     }
 
     bIsPlayerTurn = true;
-    CurrentUnitIndex = 0;
+    PlayerUnitIndex = 0;
+    AIUnitIndex = 0;
     bActionPhaseStarted = false;
     SelectedSoldier = nullptr;
     SelectedSoldier_Current = nullptr;
-    SpawnQueue.Empty();
+    PlayerSpawnQueue.Empty();
+    AISpawnQueue.Empty();
 
     if (GameUIInstance)
     {
         GameUIInstance->ShowWelcomeMessage();
-        GameUIInstance->SetSpawnQueue(SpawnQueue);
+        GameUIInstance->SetSpawnQueue(PlayerSpawnQueue);
     }
 
     UE_LOG(LogTemp, Warning, TEXT("♻️ Reset completato!"));
+
+}
+void ABaseGameMode::SpawnAISoldier(TSubclassOf<ASoldier> SoldierClass, const FVector& Location, ATile* Tile)
+{
+    ASoldier* AIUnit = GetWorld()->SpawnActor<ASoldier>(SoldierClass, Location, FRotator::ZeroRotator);
+    if (AIUnit)
+    {
+        AIUnit->Team = ETeam::AI;
+        Tile->SetTileOccupied(true);
+        AIUnit->TryAssignOwningTile(Tiles);
+
+        FString Path;
+        if (SoldierClass->IsChildOf(ABrawlerSoldier::StaticClass()))
+        {
+            Path = "/Game/Sprites/Soldier1_Red_Sprite.Soldier1_Red_Sprite";
+        }
+        else
+        {
+            Path = "/Game/Sprites/Soldier2_Red_Sprite.Soldier2_Red_Sprite";
+        }
+
+        UPaperSprite* SpriteAsset = LoadObject<UPaperSprite>(nullptr, *Path);
+        if (SpriteAsset)
+        {
+            AIUnit->SpriteComponent->SetSprite(SpriteAsset);
+        }
+
+        UE_LOG(LogTemp, Warning, TEXT("🤖 AI ha piazzato un %s (Team: AI)"), *AIUnit->GetName());
+    }
+}
+
+void ABaseGameMode::PlaceAIUnit()
+{
+    if (AIUnitIndex >= AISpawnQueue.Num()) return;
+
+    TArray<ATile*> FreeTiles;
+    for (ATile* Tile : Tiles)
+    {
+        if (Tile && Tile->IsTileFree())
+        {
+            FreeTiles.Add(Tile);
+        }
+    }
+
+    if (FreeTiles.Num() == 0) return;
+
+    ATile* SelectedTile = FreeTiles[FMath::RandRange(0, FreeTiles.Num() - 1)];
+    FVector SpawnLocation = SelectedTile->GetActorLocation() + FVector(0, 0, 50);
+
+    TSubclassOf<ASoldier> SoldierClass = AISpawnQueue[AIUnitIndex];
+    SpawnAISoldier(SoldierClass, SpawnLocation, SelectedTile);
+
+    AIUnitIndex++;
+
+    if (GameUIInstance)
+    {
+        GameUIInstance->ShowPlacementMessage(false, AIUnitIndex);
+    }
+
+    if (AIUnitIndex >= AISpawnQueue.Num() && PlayerUnitIndex >= PlayerSpawnQueue.Num())
+    {
+        OnPlacementPhaseComplete();
+    }
+    else
+    {
+        bIsPlayerTurn = true;
+        NextTurn();
+    }
 }
